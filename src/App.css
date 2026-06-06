@@ -1,0 +1,78 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+}
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* MAIN PAGE */
+.main-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* CARD */
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.08);
+}
+
+/* BUTTON */
+.btn {
+  background: #800020;
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+/* INPUT */
+.input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  gap: 15px;
+}
+
+/* TABLE */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: white;
+}
+
+th {
+  background: #800020;
+  color: white;
+}
+
+th,
+td {
+  padding: 12px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
