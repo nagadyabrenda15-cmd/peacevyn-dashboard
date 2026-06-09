@@ -113,7 +113,24 @@ const EMPTY = {
 function SavingsForm({ initial = EMPTY, members = [], packages = [], onSave, onCancel, saving }) {
   const [form, setForm] = useState(initial);
   const [errors, setErrors] = useState({});
+
+  // When member changes → auto-fill their saving package
+  function handleMemberChange(memberId) {
+    const selectedMember = members.find(m => String(m.id) === String(memberId));
+    setForm(f => ({
+      ...f,
+      member_id: memberId,
+      saving_package_id: selectedMember?.saving_package_id
+        ? String(selectedMember.saving_package_id)
+        : f.saving_package_id,
+    }));
+    setErrors(e => ({ ...e, member_id: "", saving_package_id: "" }));
+  }
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  // Get the auto-filled package name for display
+  const autoPackage = packages.find(p => String(p.id) === String(form.saving_package_id));
 
   function validate() {
     const e = {};
@@ -134,7 +151,7 @@ function SavingsForm({ initial = EMPTY, members = [], packages = [], onSave, onC
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
         <Field label="Member" required>
-          <select value={form.member_id} onChange={e => set("member_id", e.target.value)}
+          <select value={form.member_id} onChange={e => handleMemberChange(e.target.value)}
             style={{ ...sel, ...(errors.member_id ? { borderColor: "#dc2626" } : {}) }}>
             <option value="">— Select member —</option>
             {members.map(m => <option key={m.id} value={m.id}>{m.full_name} ({m.member_number})</option>)}
@@ -142,12 +159,19 @@ function SavingsForm({ initial = EMPTY, members = [], packages = [], onSave, onC
           {errors.member_id && <span style={{ fontSize: 11, color: "#dc2626" }}>{errors.member_id}</span>}
         </Field>
 
-        <Field label="Savings Package" required>
-          <select value={form.saving_package_id} onChange={e => set("saving_package_id", e.target.value)}
-            style={{ ...sel, ...(errors.saving_package_id ? { borderColor: "#dc2626" } : {}) }}>
-            <option value="">— Select package —</option>
-            {packages.map(p => <option key={p.id} value={p.id}>{p.name || `Package #${p.id}`}</option>)}
-          </select>
+        <Field label="Savings Package">
+          {/* Read-only — auto filled from member's assigned package */}
+          <input
+            type="text"
+            readOnly
+            value={autoPackage ? autoPackage.package_name : form.member_id ? "No package assigned" : "Select a member first"}
+            style={{ ...inp, background: "#f3f4f6", color: autoPackage ? "#800020" : "#aaa", fontWeight: autoPackage ? 700 : 400, cursor: "not-allowed" }}
+          />
+          {autoPackage && (
+            <span style={{ fontSize: 11, color: "#15803d", fontWeight: 600 }}>
+              ✓ Auto-filled from member profile
+            </span>
+          )}
           {errors.saving_package_id && <span style={{ fontSize: 11, color: "#dc2626" }}>{errors.saving_package_id}</span>}
         </Field>
 
@@ -304,8 +328,8 @@ export default function Savings() {
     setLoading(true);
     const [sv, mb, pk] = await Promise.all([
       supabase.from("savings").select("*").order("created_at", { ascending: false }),
-      supabase.from("members").select("id, full_name, member_number"),
-      supabase.from("saving_packages").select("id, name"),
+      supabase.from("members").select("id, full_name, member_number, saving_package_id"),
+      supabase.from("saving_packages").select("id, package_name"),
     ]);
     setSavings(sv.data || []);
     setMembers(mb.data || []);
@@ -364,7 +388,7 @@ export default function Savings() {
     return m ? `${m.full_name}` : `Member #${id}`;
   };
   const getMemberNumber = (id) => members.find(m => m.id === id)?.member_number || "";
-  const getPackageName  = (id) => packages.find(p => p.id === id)?.name || `Pkg #${id}`;
+  const getPackageName  = (id) => packages.find(p => p.id === id)?.package_name || `Pkg #${id}`;
 
   // ── KPIs
   const totalDeposits   = savings.filter(s => s.transaction_type !== "withdrawal").reduce((a, s) => a + Number(s.amount), 0);

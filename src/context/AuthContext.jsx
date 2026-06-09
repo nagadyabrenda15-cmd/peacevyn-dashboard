@@ -4,54 +4,38 @@ import { supabase } from "../lib/supabase";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [role, setRole] = useState(null); // "admin" | "staff"
+  const [user,    setUser]    = useState(null);
+  const [role,    setRole]    = useState(null); // "admin" | "staff" | "member"
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        fetchRole(session.user);
-      } else {
-        setLoading(false);
-      }
+      if (session?.user) fetchRole(session.user);
+      else setLoading(false);
     });
 
-    // Listen to auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (session?.user) {
-          fetchRole(session.user);
-        } else {
-          setUser(null);
-          setRole(null);
-          setLoading(false);
-        }
-      }
-    );
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) fetchRole(session.user);
+      else { setUser(null); setRole(null); setLoading(false); }
+    });
 
     return () => subscription.unsubscribe();
   }, []);
 
-async function fetchRole(authUser) {
-  const { data } = await supabase
-    .from("user_profiles")
-    .select("role")
-    .eq("id", authUser.id)
-    .single();
+  async function fetchRole(authUser) {
+    const { data } = await supabase
+      .from("user_profiles")
+      .select("role")
+      .eq("id", authUser.id)
+      .single();
 
-  setUser(authUser);
-  setRole(data?.role || "staff");
-  setLoading(false);
-}
+    setUser(authUser);
+    setRole(data?.role || "staff");
+    setLoading(false);
+  }
 
   async function signIn(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { data, error };
+    return await supabase.auth.signInWithPassword({ email, password });
   }
 
   async function signOut() {
@@ -65,12 +49,7 @@ async function fetchRole(authUser) {
   );
 }
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
+export function useAuth() { return useContext(AuthContext); }
+export function useIsAdmin() { const { role } = useAuth(); return role === "admin"; }
+export function useIsMember() { const { role } = useAuth(); return role === "member"; }
 
-// Convenience hook
-export function useIsAdmin() {
-  const { role } = useAuth();
-  return role === "admin";
-}

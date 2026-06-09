@@ -219,21 +219,23 @@ export default function Dashboard() {
   }
 
   async function loadKPIs() {
-    const [membersRes, savingsRes, loansRes, finesRes] = await Promise.all([
-      supabase.from("members").select("member_state"),
-      supabase.from("savings").select("amount, created_at"),
+    const [membersRes, savingsRes, loansRes, finesRes, welfareRes] = await Promise.all([
+      supabase.from("members").select("member_status"),
+      supabase.from("savings").select("amount, transaction_type, created_at"),
       supabase.from("loans").select("loan_amount, amount_paid, balance, loan_status, total_amount_to_pay"),
       supabase.from("fines").select("amount, fine_status"),
+      supabase.from("welfare_contributions").select("amount"),
     ]);
 
     const members = membersRes.data || [];
     const savings = savingsRes.data || [];
     const loans = loansRes.data || [];
     const fines = finesRes.data || [];
+    const welfare = welfareRes.data || [];
 
-    const activeMembers = members.filter(m => m.member_state === "active").length;
-    const totalSavings = savings.reduce((s, r) => s + Number(r.amount), 0);
-    const totalWelfare = savings.filter(r => r.welfare).reduce((s, r) => s + Number(r.amount), 0);
+    const activeMembers = members.filter(m => m.member_status === "active").length;
+    const totalSavings = savings.filter(s => s.transaction_type !== "withdrawal").reduce((s, r) => s + Number(r.amount), 0);
+    const totalWelfare = welfare.reduce((s, r) => s + Number(r.amount || 0), 0);
 
     const totalLoans = loans.reduce((s, r) => s + Number(r.loan_amount), 0);
     const outstanding = loans.filter(l => l.loan_status === "approved")
@@ -280,8 +282,8 @@ export default function Dashboard() {
     const loanTrend = [];
     for (const { start, end } of months) {
       const [sv, ln] = await Promise.all([
-        supabase.from("savings").select("amount").gte("created_at", start).lte("created_at", end + "T23:59:59"),
-        supabase.from("loans").select("loan_amount").gte("created_at", start).lte("created_at", end + "T23:59:59"),
+        supabase.from("savings").select("amount").gte("saving_date", start).lte("saving_date", end),
+        supabase.from("loans").select("loan_amount").gte("issue_date", start).lte("issue_date", end),
       ]);
       savTrend.push((sv.data || []).reduce((s, r) => s + Number(r.amount), 0));
       loanTrend.push((ln.data || []).reduce((s, r) => s + Number(r.loan_amount), 0));
@@ -293,9 +295,9 @@ export default function Dashboard() {
   async function loadRecentActivity() {
     const todayStr = today();
     const [sv, ln, fi] = await Promise.all([
-      supabase.from("savings").select("amount, created_at, members_id").gte("created_at", todayStr).order("created_at", { ascending: false }).limit(5),
-      supabase.from("loans").select("loan_amount, loan_status, created_at, members_id").gte("created_at", todayStr).order("created_at", { ascending: false }).limit(5),
-      supabase.from("fines").select("amount, fine_reason, created_at, member_id").gte("created_at", todayStr).order("created_at", { ascending: false }).limit(5),
+      supabase.from("savings").select("amount, created_at, member_id").gte("saving_date", todayStr).order("created_at", { ascending: false }).limit(5),
+      supabase.from("loans").select("loan_amount, loan_status, created_at, members_id").gte("issue_date", todayStr).order("created_at", { ascending: false }).limit(5),
+      supabase.from("fines").select("amount, fine_reason, created_at, member_id").gte("issued_date", todayStr).order("created_at", { ascending: false }).limit(5),
     ]);
 
     const activities = [
@@ -308,19 +310,18 @@ export default function Dashboard() {
   }
 
   async function loadTopSavers() {
-    const { data } = await supabase.from("savings").select("members_id, amount");
+    const { data } = await supabase.from("savings").select("member_id, amount");
     if (!data) return;
     const map = {};
-    data.forEach(r => { map[r.members_id] = (map[r.members_id] || 0) + Number(r.amount); });
+    data.forEach(r => { map[r.member_id] = (map[r.member_id] || 0) + Number(r.amount); });
     const sorted = Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 5);
-    // Try to get names
-    const ids = sorted.map(s => s[0]).filter(Boolean);
+    const ids = sorted.map(s => Number(s[0])).filter(Boolean);
     let names = {};
     if (ids.length) {
       const { data: mdata } = await supabase.from("members").select("id, full_name").in("id", ids);
       (mdata || []).forEach(m => { names[m.id] = m.full_name; });
     }
-    setTopSavers(sorted.map(([id, total]) => ({ name: names[id] || `Member #${id?.slice(0,6) || "?"}`, total })));
+    setTopSavers(sorted.map(([id, total]) => ({ name: names[Number(id)] || `Member #${id}`, total })));
   }
 
   async function loadLoanPortfolio() {

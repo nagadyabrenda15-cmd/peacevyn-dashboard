@@ -183,9 +183,8 @@ function MemberForm({ initial = EMPTY_FORM, packages = [], onSave, onCancel, sav
             style={{ ...selectStyle, ...(errors.saving_package_id ? { borderColor: "#dc2626" } : {}) }}
           >
             <option value="">— Select package —</option>
-            {packages.map(p => (
-              <option key={p.id} value={p.id}>{p.name || `Package #${p.id}`}</option>
-            ))}
+            {packages.map(p => <option key={p.id} value={p.id}>{p.package_name || `Package #${p.id}`}</option>)}
+            ))
           </select>
           {errors.saving_package_id && <span style={{ fontSize: 11, color: "#dc2626" }}>Required</span>}
         </Field>
@@ -311,7 +310,7 @@ export default function Members() {
     setLoading(true);
     const [membersRes, pkgRes] = await Promise.all([
       supabase.from("members").select("*").order("created_at", { ascending: false }),
-      supabase.from("saving_packages").select("id, name"),
+      supabase.from("saving_packages").select("id, package_name"),
     ]);
     setMembers(membersRes.data || []);
     setPackages(pkgRes.data || []);
@@ -376,7 +375,7 @@ export default function Members() {
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   function getPackageName(id) {
-    return packages.find(p => p.id === id)?.name || `Package #${id}`;
+    return packages.find(p => p.id === id)?.package_name || `Package #${id}`;
   }
 
   // ── Stats
