@@ -135,14 +135,29 @@ function Badge({ text }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // TAB: HOME
 // ═══════════════════════════════════════════════════════════════════════════════
-function HomeTab({ member, savings, loans, treat, treatTx, welfare, packages, onNav }) {
-  const savingsBalance  = savings.reduce((a,s) => s.transaction_type!=="withdrawal" ? a+Number(s.amount) : a-Number(s.amount), 0);
-  const activeLoan      = loans.find(l => l.loan_status === "approved");
-  const loanBalance     = activeLoan ? Number(activeLoan.balance||0) : 0;
-  const treatBalance    = treatTx.length > 0 ? Number(treatTx[0].balance_after) : 0;
-  const isEnrolled      = treatTx.length > 0;
-  const welfareTotal    = welfare.reduce((a,w) => a+Number(w.amount||0), 0);
-  const pkg             = packages.find(p => p.id === member?.saving_package_id);
+function HomeTab({ member, savings, loans, treatTx, welfare, packages }) {
+  const savingsBalance = savings.reduce((a,s) => s.transaction_type!=="withdrawal" ? a+Number(s.amount) : a-Number(s.amount), 0);
+  const activeLoan     = loans.find(l => l.loan_status === "approved");
+  const loanBalance    = activeLoan ? Number(activeLoan.balance||0) : 0;
+
+  // Treat — only non-subscription txs count for balance
+  const treatDeposits  = treatTx.filter(t=>t.transaction_type!=="subscription");
+  const isEnrolled     = treatTx.some(t=>t.transaction_type==="subscription");
+  const treatBalance   = treatDeposits.length > 0 ? Number(treatDeposits[0].balance_after) : 0;
+  const lastTreatTx    = treatDeposits[0];
+
+  // Most recent savings tx
+  const lastSavingsTx  = savings[0];
+
+  // Welfare — check if paid this month
+  const now            = new Date();
+  const thisMonth      = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+  const paidThisMonth  = welfare.some(w => {
+    const d = w.created_at || w.contribution_date || "";
+    return d.startsWith(thisMonth);
+  });
+
+  const pkg = packages.find(p => p.id === member?.saving_package_id);
 
   return (
     <div style={{ padding: "0 0 16px" }}>
@@ -161,10 +176,7 @@ function HomeTab({ member, savings, loans, treat, treatTx, welfare, packages, on
             {member?.member_number} · {pkg?.package_name || "—"}
           </div>
         </div>
-        <div style={{
-          background: "rgba(255,255,255,0.15)", borderRadius: 10,
-          padding: "8px 14px", textAlign: "center",
-        }}>
+        <div style={{ background: "rgba(255,255,255,0.15)", borderRadius: 10, padding: "8px 14px", textAlign: "center" }}>
           <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 10, fontWeight: 600 }}>STATUS</div>
           <div style={{ color: "#fff", fontSize: 13, fontWeight: 800, textTransform: "uppercase" }}>
             {member?.member_status || "—"}
@@ -173,41 +185,80 @@ function HomeTab({ member, savings, loans, treat, treatTx, welfare, packages, on
       </div>
 
       {/* Balance Cards */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
-        <BalanceCard label="Savings Balance" amount={savingsBalance} icon="💰" color="#800020"
-          sub={`${savings.length} transactions`} />
-        <BalanceCard label="Active Loan Balance" amount={loanBalance} icon="📋" color="#2563eb"
-          sub={activeLoan ? `Due: ${activeLoan.due_date}` : "No active loan"} />
-        <BalanceCard label="Treat Account" amount={treatBalance} icon="🏦" color="#15803d"
-          sub={isEnrolled ? `${treatTx.length} transactions` : "Pay UGX 5,000 to activate"}
-          locked={!isEnrolled} />
-        <BalanceCard label="Welfare Contributed" amount={welfareTotal} icon="🤝" color="#7e22ce"
-          sub={`${welfare.length} contribution${welfare.length!==1?"s":""}`} />
-      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {/* Savings */}
+        <div style={{ background: "linear-gradient(135deg,#800020,#b00030)", borderRadius: 14, padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Savings Balance</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", fontFamily: "Georgia, serif", marginTop: 4 }}>UGX {fmt(savingsBalance)}</div>
+            {lastSavingsTx ? (
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginTop: 3 }}>
+                Last: {lastSavingsTx.transaction_type} · {lastSavingsTx.saving_date || lastSavingsTx.created_at?.split("T")[0] || "—"}
+              </div>
+            ) : <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>No transactions yet</div>}
+          </div>
+          <div style={{ fontSize: 32, opacity: 0.3 }}>💰</div>
+        </div>
 
-      {/* Quick Actions */}
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "#555", marginBottom: 10 }}>Quick Actions</div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <QuickAction icon="💳" label="Deposit Savings"  onClick={() => onNav("savings")}  color="#800020" />
-          <QuickAction icon="📋" label="Request Loan"     onClick={() => onNav("loan")}     color="#2563eb" />
-          <QuickAction icon="🏦" label="Treat Account"    onClick={() => onNav("treat")}    color="#15803d" />
-          <QuickAction icon="👤" label="My Profile"       onClick={() => onNav("profile")}  color="#7e22ce" />
+        {/* Loan */}
+        <div style={{ background: activeLoan ? "linear-gradient(135deg,#2563eb,#1d4ed8)" : "#f9fafb", borderRadius: 14, padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", border: activeLoan ? "none" : "1px dashed #e5e7eb" }}>
+          <div>
+            <div style={{ fontSize: 12, color: activeLoan ? "rgba(255,255,255,0.8)" : "#888", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Active Loan</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: activeLoan ? "#fff" : "#555", fontFamily: "Georgia, serif", marginTop: 4 }}>
+              {activeLoan ? `UGX ${fmt(loanBalance)}` : "No active loan"}
+            </div>
+            {activeLoan && (
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginTop: 3 }}>
+                Due: {activeLoan.due_date} · Issued: {activeLoan.issue_date}
+              </div>
+            )}
+          </div>
+          <div style={{ fontSize: 32, opacity: 0.3 }}>📋</div>
+        </div>
+
+        {/* Treat */}
+        {isEnrolled ? (
+          <div style={{ background: "linear-gradient(135deg,#15803d,#166534)", borderRadius: 14, padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Treat Account</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", fontFamily: "Georgia, serif", marginTop: 4 }}>UGX {fmt(treatBalance)}</div>
+              {lastTreatTx ? (
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginTop: 3 }}>
+                  Last: {lastTreatTx.transaction_type} · {lastTreatTx.transaction_date || "—"}
+                </div>
+              ) : <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>No deposits yet</div>}
+            </div>
+            <div style={{ fontSize: 32, opacity: 0.3 }}>🏦</div>
+          </div>
+        ) : (
+          <div style={{ background: "#f3f4f6", borderRadius: 14, padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", opacity: 0.7 }}>
+            <div>
+              <div style={{ fontSize: 12, color: "#888", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Treat Account</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#555", marginTop: 4 }}>🔒 Subscribe to activate</div>
+              <div style={{ fontSize: 11, color: "#aaa", marginTop: 3 }}>Pay UGX 5,000 to join</div>
+            </div>
+            <div style={{ fontSize: 32, opacity: 0.3 }}>🏦</div>
+          </div>
+        )}
+
+        {/* Welfare */}
+        <div style={{
+          background: paidThisMonth ? "linear-gradient(135deg,#15803d,#166534)" : "linear-gradient(135deg,#dc2626,#b91c1c)",
+          borderRadius: 14, padding: "16px 18px",
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+        }}>
+          <div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Welfare — This Month</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", fontFamily: "Georgia, serif", marginTop: 4 }}>
+              {paidThisMonth ? "✓ Cleared" : "✗ Not Cleared"}
+            </div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginTop: 3 }}>
+              {paidThisMonth ? "Welfare contribution paid" : "Welfare not yet paid this month"}
+            </div>
+          </div>
+          <div style={{ fontSize: 32, opacity: 0.3 }}>🤝</div>
         </div>
       </div>
-
-      {/* Saving Package Info */}
-      {pkg && (
-        <div style={{ background:"#fff5f7", borderRadius:12, padding:"14px 16px", border:"1px solid #f9e0e4" }}>
-          <div style={{ fontSize:12,fontWeight:700,color:"#800020",textTransform:"uppercase",letterSpacing:0.5,marginBottom:6 }}>
-            📦 Your Saving Package — {pkg.package_name}
-          </div>
-          <div style={{ fontSize:13,color:"#555",lineHeight:1.6,marginBottom:8 }}>{pkg.description}</div>
-          <div style={{ fontSize:14,fontWeight:800,color:"#800020" }}>
-            Minimum: UGX {fmt(pkg.minimum_saving)} per period
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -215,76 +266,28 @@ function HomeTab({ member, savings, loans, treat, treatTx, welfare, packages, on
 // ═══════════════════════════════════════════════════════════════════════════════
 // TAB: SAVINGS
 // ═══════════════════════════════════════════════════════════════════════════════
-function SavingsTab({ member, savings, pendingDeposits, packages, onRefresh }) {
-  const [showDeposit, setShowDeposit] = useState(false);
-  const [saving,      setSaving]      = useState(false);
-  const [toast,       setToast]       = useState(null);
-  const [form,        setForm]        = useState({ amount:"", payment_method:"cash", reference:"", notes:"" });
-  const [error,       setError]       = useState("");
-
+// ═══════════════════════════════════════════════════════════════════════════════
+// TAB: SAVINGS
+// ═══════════════════════════════════════════════════════════════════════════════
+function SavingsTab({ member, savings, packages }) {
   const balance = savings.reduce((a,s) => s.transaction_type!=="withdrawal" ? a+Number(s.amount) : a-Number(s.amount), 0);
   const pkg     = packages.find(p => p.id === member?.saving_package_id);
 
-  function showT(msg, type="success") { setToast({msg,type}); setTimeout(()=>setToast(null),3000); }
-
-  async function handleDeposit() {
-    if (!form.amount || Number(form.amount) <= 0) { setError("Enter a valid amount"); return; }
-    if (pkg && Number(form.amount) < Number(pkg.minimum_saving)) {
-      setError(`Minimum deposit is UGX ${fmt(pkg.minimum_saving)}`); return;
-    }
-    setSaving(true);
-    const { error: err } = await supabase.from("savings_deposits").insert([{
-      member_id:      member.id,
-      amount:         Number(form.amount),
-      payment_method: form.payment_method,
-      reference:      form.reference || null,
-      notes:          form.notes || null,
-      deposit_date:   today(),
-      status:         "pending",
-    }]);
-    setSaving(false);
-    if (err) { showT(err.message,"error"); return; }
-    showT("Deposit request submitted! Awaiting admin confirmation.");
-    setShowDeposit(false);
-    setForm({ amount:"",payment_method:"cash",reference:"",notes:"" });
-    onRefresh();
-  }
-
   return (
     <div>
-      <Toast toast={toast} />
-
       {/* Balance hero */}
       <div style={{ background:"linear-gradient(135deg,#800020,#b00030)", borderRadius:16, padding:"20px", marginBottom:16 }}>
         <div style={{ color:"rgba(255,255,255,0.75)", fontSize:12, fontWeight:600, textTransform:"uppercase" }}>Savings Balance</div>
         <div style={{ color:"#fff", fontSize:28, fontWeight:800, fontFamily:"Georgia, serif", marginTop:4 }}>UGX {fmt(balance)}</div>
-        {pkg && <div style={{ color:"rgba(255,255,255,0.7)", fontSize:12, marginTop:6 }}>Min deposit: UGX {fmt(pkg.minimum_saving)} · {pkg.package_name}</div>}
+        {pkg && <div style={{ color:"rgba(255,255,255,0.7)", fontSize:12, marginTop:6 }}>{pkg.package_name} · Min: UGX {fmt(pkg.minimum_saving)}</div>}
       </div>
-
-      {/* Pending deposits */}
-      {pendingDeposits.length > 0 && (
-        <div style={{ background:"#fef9c3", borderRadius:10, padding:"12px 14px", marginBottom:14, border:"1px solid #fde68a" }}>
-          <div style={{ fontSize:12,fontWeight:700,color:"#a16207",marginBottom:6 }}>⏳ Pending Deposits</div>
-          {pendingDeposits.map((d,i) => (
-            <div key={i} style={{ display:"flex",justifyContent:"space-between",fontSize:13,color:"#555",marginBottom:4 }}>
-              <span>UGX {fmt(d.amount)} · {d.payment_method}</span>
-              <Badge text={d.status} />
-            </div>
-          ))}
-        </div>
-      )}
-
-      <button onClick={() => setShowDeposit(true)} style={{
-        width:"100%", background:"#800020", color:"#fff", border:"none",
-        borderRadius:12, padding:"14px", fontWeight:700, cursor:"pointer", fontSize:15, marginBottom:20,
-      }}>+ Request Savings Deposit</button>
 
       {/* Transaction history */}
       <div style={{ fontSize:13,fontWeight:700,color:"#555",marginBottom:10 }}>Transaction History</div>
       {savings.length === 0 ? (
         <div style={{ textAlign:"center",padding:"32px 0",color:"#aaa" }}>
           <div style={{ fontSize:36,marginBottom:8 }}>💰</div>
-          <p style={{ margin:0 }}>No savings yet.</p>
+          <p style={{ margin:0 }}>No savings transactions yet.</p>
         </div>
       ) : (
         <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
@@ -292,7 +295,9 @@ function SavingsTab({ member, savings, pendingDeposits, packages, onRefresh }) {
             <div key={i} style={{ background:"#fff",borderRadius:10,padding:"12px 14px",border:"1px solid #f3f4f6",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
               <div>
                 <div style={{ fontSize:13,fontWeight:700,color:"#111",textTransform:"capitalize" }}>{s.transaction_type}</div>
-                <div style={{ fontSize:11,color:"#aaa",marginTop:2 }}>{s.saving_date} · {s.payment_method||"—"}</div>
+                <div style={{ fontSize:11,color:"#aaa",marginTop:2 }}>
+                  {s.saving_date || s.created_at?.split("T")[0] || "—"} · {s.payment_method||"—"}
+                </div>
               </div>
               <div style={{ fontSize:15,fontWeight:800,color:s.transaction_type==="withdrawal"?"#dc2626":"#15803d" }}>
                 {s.transaction_type==="withdrawal"?"−":"+"}UGX {fmt(s.amount)}
@@ -300,33 +305,6 @@ function SavingsTab({ member, savings, pendingDeposits, packages, onRefresh }) {
             </div>
           ))}
         </div>
-      )}
-
-      {showDeposit && (
-        <Modal title="Request Deposit" onClose={() => setShowDeposit(false)}>
-          <Field label="Amount (UGX)" required>
-            <input type="number" min="0" placeholder={pkg?`Min UGX ${fmt(pkg.minimum_saving)}`:"0"} value={form.amount}
-              onChange={e=>{setForm(f=>({...f,amount:e.target.value}));setError("");}} style={inp} />
-            {error && <span style={{fontSize:11,color:"#dc2626"}}>{error}</span>}
-          </Field>
-          <Field label="Payment Method">
-            <select value={form.payment_method} onChange={e=>setForm(f=>({...f,payment_method:e.target.value}))} style={sel}>
-              {["cash","mobile_money","bank_transfer","cheque"].map(m=><option key={m}>{m}</option>)}
-            </select>
-          </Field>
-          <Field label="Reference / Receipt No.">
-            <input type="text" placeholder="Optional" value={form.reference} onChange={e=>setForm(f=>({...f,reference:e.target.value}))} style={inp} />
-          </Field>
-          <Field label="Notes">
-            <textarea rows={2} placeholder="Optional" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} style={{...inp,resize:"vertical"}} />
-          </Field>
-          <div style={{background:"#fff5f7",borderRadius:8,padding:"10px 12px",marginBottom:14,fontSize:12,color:"#800020"}}>
-            ℹ️ Your deposit will be recorded after admin confirmation.
-          </div>
-          <button onClick={handleDeposit} disabled={saving} style={{width:"100%",background:saving?"#c0606f":"#800020",color:"#fff",border:"none",borderRadius:10,padding:"13px",fontWeight:700,cursor:saving?"not-allowed":"pointer",fontSize:15}}>
-            {saving?"Submitting…":"Submit Deposit Request"}
-          </button>
-        </Modal>
       )}
     </div>
   );
@@ -656,74 +634,71 @@ function TreatTab({ member, treatTx, treatRequests, onRefresh }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // TAB: PROFILE
 // ═══════════════════════════════════════════════════════════════════════════════
-function ProfileTab({ member, welfare, packages, onSignOut }) {
-  const pkg          = packages.find(p => p.id === member?.saving_package_id);
-  const welfareTotal = welfare.reduce((a,w) => a+Number(w.amount||0), 0);
+function ProfileTab({ member, packages, onSignOut }) {
+  const pkg = packages.find(p => p.id === member?.saving_package_id);
+
+  const initials = member?.full_name?.split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase() || "?";
 
   const rows = [
-    ["Member Number",    member?.member_number],
-    ["Full Name",        member?.full_name],
-    ["Gender",           member?.gender],
-    ["Date of Birth",    member?.date_of_birth ? new Date(member.date_of_birth).toLocaleDateString() : "—"],
-    ["Contact",          member?.contact],
-    ["Email",            member?.email || "—"],
-    ["Address",          member?.address],
-    ["National ID",      member?.national_id_number || "—"],
-    ["Next of Kin",      member?.next_of_kin_name],
-    ["NOK Contact",      member?.next_of_kin_contact],
-    ["Status",           member?.member_status],
-    ["Member Since",     member?.created_at ? new Date(member.created_at).toLocaleDateString() : "—"],
+    ["Member Number",  member?.member_number],
+    ["Gender",         member?.gender],
+    ["Date of Birth",  member?.date_of_birth ? new Date(member.date_of_birth).toLocaleDateString() : "—"],
+    ["Contact",        member?.contact],
+    ["Email",          member?.email || "—"],
+    ["Address",        member?.address],
+    ["National ID",    member?.national_id_number || "—"],
+    ["Next of Kin",    member?.next_of_kin_name],
+    ["NOK Contact",    member?.next_of_kin_contact],
+    ["Saving Package", pkg?.package_name || "—"],
+    ["Status",         member?.member_status],
+    ["Member Since",   member?.created_at ? new Date(member.created_at).toLocaleDateString() : "—"],
   ];
 
   return (
     <div>
-      {/* Profile hero */}
-      <div style={{ background:"linear-gradient(135deg,#800020,#b00030)",borderRadius:16,padding:"20px",marginBottom:16,display:"flex",alignItems:"center",gap:16 }}>
-        <div style={{ width:56,height:56,borderRadius:"50%",background:"rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:22,color:"#fff",flexShrink:0 }}>
-          {member?.full_name?.split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase()}
+      {/* Profile hero with big avatar */}
+      <div style={{ background:"linear-gradient(135deg,#800020,#b00030)", borderRadius:16, padding:"24px 20px", marginBottom:16, display:"flex", flexDirection:"column", alignItems:"center", textAlign:"center" }}>
+        {/* Avatar */}
+        <div style={{
+          width:80, height:80, borderRadius:"50%",
+          background:"rgba(255,255,255,0.25)",
+          border:"3px solid rgba(255,255,255,0.5)",
+          display:"flex", alignItems:"center", justifyContent:"center",
+          fontWeight:900, fontSize:30, color:"#fff",
+          marginBottom:12, letterSpacing:1,
+          boxShadow:"0 4px 16px rgba(0,0,0,0.2)",
+        }}>
+          {initials}
         </div>
-        <div>
-          <div style={{color:"#fff",fontSize:18,fontWeight:800,fontFamily:"Georgia, serif"}}>{member?.full_name}</div>
-          <div style={{color:"rgba(255,255,255,0.7)",fontSize:13,marginTop:2}}>{member?.member_number}</div>
-          <div style={{marginTop:6}}>
-            <span style={{background:"rgba(255,255,255,0.2)",color:"#fff",fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:99,textTransform:"capitalize"}}>
-              {member?.member_status}
+        <div style={{ color:"#fff", fontSize:20, fontWeight:800, fontFamily:"Georgia, serif" }}>{member?.full_name}</div>
+        <div style={{ color:"rgba(255,255,255,0.75)", fontSize:13, marginTop:4 }}>{member?.member_number}</div>
+        <div style={{ marginTop:8, display:"flex", gap:8 }}>
+          <span style={{ background:"rgba(255,255,255,0.2)", color:"#fff", fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:99, textTransform:"capitalize" }}>
+            {member?.member_status}
+          </span>
+          {pkg && (
+            <span style={{ background:"rgba(255,255,255,0.15)", color:"#fff", fontSize:11, fontWeight:600, padding:"4px 12px", borderRadius:99 }}>
+              📦 {pkg.package_name}
             </span>
-          </div>
+          )}
         </div>
       </div>
-
-      {/* Welfare */}
-      <div style={{background:"#faf5ff",borderRadius:12,padding:"14px 16px",marginBottom:14,border:"1px solid #e9d5ff"}}>
-        <div style={{fontSize:12,fontWeight:700,color:"#7e22ce",textTransform:"uppercase",letterSpacing:0.5,marginBottom:6}}>🤝 Welfare Status</div>
-        <div style={{fontSize:20,fontWeight:800,color:"#7e22ce"}}>UGX {fmt(welfareTotal)}</div>
-        <div style={{fontSize:12,color:"#888",marginTop:2}}>{welfare.length} contribution{welfare.length!==1?"s":""} recorded</div>
-      </div>
-
-      {/* Saving package */}
-      {pkg && (
-        <div style={{background:"#fff5f7",borderRadius:12,padding:"14px 16px",marginBottom:14,border:"1px solid #f9e0e4"}}>
-          <div style={{fontSize:12,fontWeight:700,color:"#800020",textTransform:"uppercase",letterSpacing:0.5,marginBottom:6}}>📦 Saving Package — {pkg.package_name}</div>
-          <div style={{fontSize:13,color:"#555",lineHeight:1.6,marginBottom:6}}>{pkg.description}</div>
-          <div style={{fontSize:14,fontWeight:800,color:"#800020"}}>Min: UGX {fmt(pkg.minimum_saving)} per period</div>
-        </div>
-      )}
 
       {/* Details */}
-      <div style={{fontSize:13,fontWeight:700,color:"#555",marginBottom:10}}>Personal Details</div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:"#f3f4f6",borderRadius:10,overflow:"hidden",marginBottom:20}}>
-        {rows.map(([label,val],i)=>(
-          <div key={i} style={{background:"#fff",padding:"10px 12px",gridColumn:i>=rows.length-2?"span 1":"span 1"}}>
-            <div style={{fontSize:10,color:"#999",fontWeight:600,textTransform:"uppercase",letterSpacing:0.4,marginBottom:2}}>{label}</div>
-            <div style={{fontSize:13,color:"#111",fontWeight:500}}>{val||"—"}</div>
+      <div style={{ fontSize:13, fontWeight:700, color:"#555", marginBottom:10 }}>Personal Details</div>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:1, background:"#f3f4f6", borderRadius:10, overflow:"hidden", marginBottom:20 }}>
+        {rows.map(([label,val],i) => (
+          <div key={i} style={{ background:"#fff", padding:"10px 12px" }}>
+            <div style={{ fontSize:10, color:"#999", fontWeight:600, textTransform:"uppercase", letterSpacing:0.4, marginBottom:2 }}>{label}</div>
+            <div style={{ fontSize:13, color:"#111", fontWeight:500 }}>{val||"—"}</div>
           </div>
         ))}
       </div>
 
       <button onClick={onSignOut} style={{
-        width:"100%",background:"#fff",color:"#800020",
-        border:"2px solid #800020",borderRadius:12,
-        padding:"13px",fontWeight:700,cursor:"pointer",fontSize:15,
+        width:"100%", background:"#fff", color:"#800020",
+        border:"2px solid #800020", borderRadius:12,
+        padding:"13px", fontWeight:700, cursor:"pointer", fontSize:15,
       }}>🚪 Sign Out</button>
     </div>
   );
@@ -766,7 +741,7 @@ export default function MemberPortal() {
     const mid = memberData.id;
     const [sv, ln, lnReq, tr, trReq, wf, pk, pd] = await Promise.all([
       supabase.from("savings").select("*").eq("member_id", mid).order("created_at",{ascending:false}),
-      supabase.from("loans").select("*").eq("members_id", mid).order("created_at",{ascending:false}),
+      supabase.from("loans").select("*").eq("members_id", mid).order("issue_date",{ascending:false}),
       supabase.from("loan_requests").select("*").eq("member_id", mid).order("created_at",{ascending:false}),
       supabase.from("treat").select("*").eq("member_id", mid).order("created_at",{ascending:false}),
       supabase.from("treat_requests").select("*").eq("member_id", mid).order("created_at",{ascending:false}),
@@ -835,11 +810,11 @@ export default function MemberPortal() {
 
       {/* ── Tab content */}
       <div style={{ padding:"16px 16px 80px" }}>
-        {tab === "home"    && <HomeTab    member={member} savings={savings} loans={loans} treat={[]} treatTx={treatTx} welfare={welfare} packages={packages} onNav={setTab} />}
-        {tab === "savings" && <SavingsTab member={member} savings={savings} pendingDeposits={pendingDeposits} packages={packages} onRefresh={loadAll} />}
+        {tab === "home"    && <HomeTab    member={member} savings={savings} loans={loans} treatTx={treatTx} welfare={welfare} packages={packages} />}
+        {tab === "savings" && <SavingsTab member={member} savings={savings} packages={packages} />}
         {tab === "loan"    && <LoanTab    member={member} loans={loans} loanRequests={loanRequests} onRefresh={loadAll} />}
         {tab === "treat"   && <TreatTab   member={member} treatTx={treatTx} treatRequests={treatRequests} onRefresh={loadAll} />}
-        {tab === "profile" && <ProfileTab member={member} welfare={welfare} packages={packages} onSignOut={signOut} />}
+        {tab === "profile" && <ProfileTab member={member} packages={packages} onSignOut={signOut} />}
       </div>
 
       {/* ── Bottom nav */}
@@ -867,3 +842,4 @@ export default function MemberPortal() {
     </div>
   );
 }
+
