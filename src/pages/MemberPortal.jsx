@@ -632,6 +632,105 @@ function TreatTab({ member, treatTx, treatRequests, onRefresh }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// TAB: WELFARE
+// ═══════════════════════════════════════════════════════════════════════════════
+function WelfareTab({ welfare }) {
+  const now          = new Date();
+  const MONTHS       = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+  function formatMonth(dateStr) {
+    if (!dateStr) return "—";
+    const d = new Date(dateStr);
+    return `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  // Check if paid this month
+  const thisMonth     = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+  const paidThisMonth = welfare.some(w => w.contribution_month?.startsWith(thisMonth));
+  const totalPaid     = welfare.reduce((a,w)=>a+Number(w.amount||0),0);
+
+  // Build month history — last 12 months
+  const monthHistory = [];
+  for (let i=0; i<12; i++) {
+    const d     = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const key   = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+    const label = `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+    const contrib = welfare.find(w => w.contribution_month?.startsWith(key));
+    monthHistory.push({ key, label, contrib, paid: !!contrib });
+  }
+
+  return (
+    <div>
+      {/* Status hero */}
+      <div style={{
+        background: paidThisMonth
+          ? "linear-gradient(135deg,#15803d,#166534)"
+          : "linear-gradient(135deg,#dc2626,#b91c1c)",
+        borderRadius:16, padding:"20px", marginBottom:16,
+        display:"flex", justifyContent:"space-between", alignItems:"center",
+      }}>
+        <div>
+          <div style={{color:"rgba(255,255,255,0.75)",fontSize:12,fontWeight:600,textTransform:"uppercase"}}>
+            {MONTHS[now.getMonth()]} {now.getFullYear()}
+          </div>
+          <div style={{color:"#fff",fontSize:26,fontWeight:800,fontFamily:"Georgia, serif",marginTop:4}}>
+            {paidThisMonth ? "✓ Cleared" : "✗ Not Cleared"}
+          </div>
+          <div style={{color:"rgba(255,255,255,0.75)",fontSize:12,marginTop:6}}>
+            {paidThisMonth
+              ? `Paid UGX ${fmt(welfare.find(w=>w.contribution_month?.startsWith(thisMonth))?.amount||0)} this month`
+              : "Welfare not yet paid for this month"}
+          </div>
+        </div>
+        <div style={{fontSize:40,opacity:0.25}}>🤝</div>
+      </div>
+
+      {/* Summary */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
+        <div style={{background:"#fff",borderRadius:10,padding:"12px 14px",border:"1px solid #f3e8ea"}}>
+          <div style={{fontSize:11,color:"#aaa",fontWeight:600,textTransform:"uppercase",letterSpacing:0.4}}>Total Paid</div>
+          <div style={{fontSize:18,fontWeight:800,color:"#800020",marginTop:2}}>UGX {fmt(totalPaid)}</div>
+        </div>
+        <div style={{background:"#fff",borderRadius:10,padding:"12px 14px",border:"1px solid #f3e8ea"}}>
+          <div style={{fontSize:11,color:"#aaa",fontWeight:600,textTransform:"uppercase",letterSpacing:0.4}}>Months Paid</div>
+          <div style={{fontSize:18,fontWeight:800,color:"#800020",marginTop:2}}>{welfare.length}</div>
+        </div>
+      </div>
+
+      {/* Month-by-month history */}
+      <div style={{fontSize:13,fontWeight:700,color:"#555",marginBottom:10}}>Last 12 Months</div>
+      <div style={{display:"flex",flexDirection:"column",gap:6}}>
+        {monthHistory.map((m,i)=>(
+          <div key={i} style={{
+            background:"#fff",borderRadius:10,padding:"12px 14px",
+            border:`1px solid ${m.paid?"#dcfce7":"#fee2e2"}`,
+            display:"flex",justifyContent:"space-between",alignItems:"center",
+          }}>
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:"#111"}}>{m.label}</div>
+              {m.contrib && (
+                <div style={{fontSize:11,color:"#aaa",marginTop:2}}>
+                  {m.contrib.payment_method?.replace("_"," ")||"cash"}
+                  {m.contrib.notes ? ` · ${m.contrib.notes}` : ""}
+                </div>
+              )}
+            </div>
+            <div style={{display:"flex",gap:8,alignItems:"center",flexShrink:0}}>
+              {m.paid && <span style={{fontSize:13,fontWeight:800,color:"#15803d"}}>UGX {fmt(m.contrib.amount)}</span>}
+              <span style={{
+                background:m.paid?"#dcfce7":"#fee2e2",
+                color:m.paid?"#15803d":"#dc2626",
+                fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:99,whiteSpace:"nowrap",
+              }}>{m.paid?"✓ Cleared":"✗ Not Cleared"}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // TAB: PROFILE
 // ═══════════════════════════════════════════════════════════════════════════════
 function ProfileTab({ member, packages, onSignOut }) {
@@ -745,7 +844,7 @@ export default function MemberPortal() {
       supabase.from("loan_requests").select("*").eq("member_id", mid).order("created_at",{ascending:false}),
       supabase.from("treat").select("*").eq("member_id", mid).order("created_at",{ascending:false}),
       supabase.from("treat_requests").select("*").eq("member_id", mid).order("created_at",{ascending:false}),
-      supabase.from("welfare_contributions").select("*").eq("member_id", mid),
+      supabase.from("welfare_contributions").select("*").eq("member_id", mid).order("contribution_month",{ascending:false}),
       supabase.from("saving_packages").select("*"),
       supabase.from("savings_deposits").select("*").eq("member_id", mid).order("created_at",{ascending:false}),
     ]);
@@ -766,6 +865,7 @@ export default function MemberPortal() {
     { key:"savings", icon:"💰", label:"Savings" },
     { key:"loan",    icon:"📋", label:"Loan"    },
     { key:"treat",   icon:"🏦", label:"Treat"   },
+    { key:"welfare", icon:"🤝", label:"Welfare" },
     { key:"profile", icon:"👤", label:"Profile" },
   ];
 
@@ -814,6 +914,7 @@ export default function MemberPortal() {
         {tab === "savings" && <SavingsTab member={member} savings={savings} packages={packages} />}
         {tab === "loan"    && <LoanTab    member={member} loans={loans} loanRequests={loanRequests} onRefresh={loadAll} />}
         {tab === "treat"   && <TreatTab   member={member} treatTx={treatTx} treatRequests={treatRequests} onRefresh={loadAll} />}
+        {tab === "welfare" && <WelfareTab welfare={welfare} />}
         {tab === "profile" && <ProfileTab member={member} packages={packages} onSignOut={signOut} />}
       </div>
 
@@ -842,4 +943,5 @@ export default function MemberPortal() {
     </div>
   );
 }
+
 

@@ -183,8 +183,9 @@ function MemberForm({ initial = EMPTY_FORM, packages = [], onSave, onCancel, sav
             style={{ ...selectStyle, ...(errors.saving_package_id ? { borderColor: "#dc2626" } : {}) }}
           >
             <option value="">— Select package —</option>
-            {packages.map(p => <option key={p.id} value={p.id}>{p.package_name || `Package #${p.id}`}</option>)}
-            ))
+            {packages.map(p => (
+              <option key={p.id} value={p.id}>{p.package_name || `Package #${p.id}`}</option>
+            ))}
           </select>
           {errors.saving_package_id && <span style={{ fontSize: 11, color: "#dc2626" }}>Required</span>}
         </Field>
@@ -337,8 +338,10 @@ export default function Members() {
 
   async function handleEdit(form) {
     setSaving(true);
+    // Destructure out id and any read-only fields before updating
+    const { id, created_at, user_id, ...updateData } = form;
     const { error } = await supabase.from("members")
-      .update({ ...form, saving_package_id: Number(form.saving_package_id) })
+      .update({ ...updateData, saving_package_id: Number(form.saving_package_id) })
       .eq("id", editMember.id);
     setSaving(false);
     if (error) { showToast(error.message, "error"); return; }
@@ -671,4 +674,3 @@ export default function Members() {
     </div>
   );
 }
-
