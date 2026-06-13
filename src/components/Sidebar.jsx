@@ -35,6 +35,7 @@ export default function Sidebar() {
     { to:"/treat",    label:"The Treat",  icon:"🏦" },
     { to:"/reports",  label:"Reports",    icon:"📊" },
     { to:"/requests", label:"Requests",   icon:"📬", badge: pending },
+    { to:"/users",    label:"Users",      icon:"🔐" },
   ];
 
   return (
@@ -101,3 +102,4 @@ export default function Sidebar() {
     </div>
   );
 }
+

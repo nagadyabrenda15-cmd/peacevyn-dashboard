@@ -734,9 +734,29 @@ function WelfareTab({ welfare }) {
 // TAB: PROFILE
 // ═══════════════════════════════════════════════════════════════════════════════
 function ProfileTab({ member, packages, onSignOut }) {
-  const pkg = packages.find(p => p.id === member?.saving_package_id);
-
+  const pkg      = packages.find(p => p.id === member?.saving_package_id);
   const initials = member?.full_name?.split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase() || "?";
+
+  const [showChangePwd, setShowChangePwd] = useState(false);
+  const [pwdForm,       setPwdForm]       = useState({ current:"", newPwd:"", confirm:"" });
+  const [pwdError,      setPwdError]      = useState("");
+  const [pwdSuccess,    setPwdSuccess]    = useState("");
+  const [pwdLoading,    setPwdLoading]    = useState(false);
+  const [showCurrent,   setShowCurrent]   = useState(false);
+  const [showNew,       setShowNew]       = useState(false);
+
+  async function handleChangePassword() {
+    setPwdError(""); setPwdSuccess("");
+    if (!pwdForm.newPwd || pwdForm.newPwd.length < 6) { setPwdError("New password must be at least 6 characters."); return; }
+    if (pwdForm.newPwd !== pwdForm.confirm) { setPwdError("Passwords do not match."); return; }
+    setPwdLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: pwdForm.newPwd });
+    setPwdLoading(false);
+    if (error) { setPwdError(error.message); return; }
+    setPwdSuccess("✓ Password changed successfully!");
+    setPwdForm({ current:"", newPwd:"", confirm:"" });
+    setTimeout(() => { setShowChangePwd(false); setPwdSuccess(""); }, 2000);
+  }
 
   const rows = [
     ["Member Number",  member?.member_number],
@@ -755,50 +775,84 @@ function ProfileTab({ member, packages, onSignOut }) {
 
   return (
     <div>
-      {/* Profile hero with big avatar */}
-      <div style={{ background:"linear-gradient(135deg,#800020,#b00030)", borderRadius:16, padding:"24px 20px", marginBottom:16, display:"flex", flexDirection:"column", alignItems:"center", textAlign:"center" }}>
-        {/* Avatar */}
-        <div style={{
-          width:80, height:80, borderRadius:"50%",
-          background:"rgba(255,255,255,0.25)",
-          border:"3px solid rgba(255,255,255,0.5)",
-          display:"flex", alignItems:"center", justifyContent:"center",
-          fontWeight:900, fontSize:30, color:"#fff",
-          marginBottom:12, letterSpacing:1,
-          boxShadow:"0 4px 16px rgba(0,0,0,0.2)",
-        }}>
+      {/* Profile hero */}
+      <div style={{ background:"linear-gradient(135deg,#800020,#b00030)",borderRadius:16,padding:"24px 20px",marginBottom:16,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center" }}>
+        <div style={{ width:80,height:80,borderRadius:"50%",background:"rgba(255,255,255,0.25)",border:"3px solid rgba(255,255,255,0.5)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:30,color:"#fff",marginBottom:12,letterSpacing:1,boxShadow:"0 4px 16px rgba(0,0,0,0.2)" }}>
           {initials}
         </div>
-        <div style={{ color:"#fff", fontSize:20, fontWeight:800, fontFamily:"Georgia, serif" }}>{member?.full_name}</div>
-        <div style={{ color:"rgba(255,255,255,0.75)", fontSize:13, marginTop:4 }}>{member?.member_number}</div>
-        <div style={{ marginTop:8, display:"flex", gap:8 }}>
-          <span style={{ background:"rgba(255,255,255,0.2)", color:"#fff", fontSize:11, fontWeight:700, padding:"4px 12px", borderRadius:99, textTransform:"capitalize" }}>
+        <div style={{ color:"#fff",fontSize:20,fontWeight:800,fontFamily:"Georgia, serif" }}>{member?.full_name}</div>
+        <div style={{ color:"rgba(255,255,255,0.75)",fontSize:13,marginTop:4 }}>{member?.member_number}</div>
+        <div style={{ marginTop:8,display:"flex",gap:8 }}>
+          <span style={{ background:"rgba(255,255,255,0.2)",color:"#fff",fontSize:11,fontWeight:700,padding:"4px 12px",borderRadius:99,textTransform:"capitalize" }}>
             {member?.member_status}
           </span>
-          {pkg && (
-            <span style={{ background:"rgba(255,255,255,0.15)", color:"#fff", fontSize:11, fontWeight:600, padding:"4px 12px", borderRadius:99 }}>
-              📦 {pkg.package_name}
-            </span>
-          )}
+          {pkg && <span style={{ background:"rgba(255,255,255,0.15)",color:"#fff",fontSize:11,fontWeight:600,padding:"4px 12px",borderRadius:99 }}>📦 {pkg.package_name}</span>}
         </div>
       </div>
 
+      {/* Change Password Section */}
+      <div style={{ marginBottom:16 }}>
+        <button
+          onClick={()=>setShowChangePwd(s=>!s)}
+          style={{ width:"100%",background:showChangePwd?"#fff5f7":"#fff",color:"#800020",border:"2px solid #800020",borderRadius:12,padding:"12px",fontWeight:700,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8 }}
+        >
+          🔑 {showChangePwd ? "Cancel" : "Change Password"}
+        </button>
+
+        {showChangePwd && (
+          <div style={{ background:"#fff",borderRadius:12,padding:"16px",marginTop:10,border:"1px solid #f9e0e4",display:"flex",flexDirection:"column",gap:12 }}>
+
+            <div style={{ display:"flex",flexDirection:"column",gap:5 }}>
+              <label style={{ fontSize:12,fontWeight:700,color:"#555",textTransform:"uppercase",letterSpacing:0.4 }}>New Password</label>
+              <div style={{ position:"relative" }}>
+                <input
+                  type={showNew?"text":"password"}
+                  placeholder="Min. 6 characters"
+                  value={pwdForm.newPwd}
+                  onChange={e=>setPwdForm(f=>({...f,newPwd:e.target.value}))}
+                  style={{ padding:"10px 40px 10px 12px",border:"1.5px solid #e5e7eb",borderRadius:8,fontSize:14,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"sans-serif" }}
+                />
+                <button onClick={()=>setShowNew(s=>!s)} style={{ position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:15,color:"#888",padding:0 }}>
+                  {showNew?"🙈":"👁"}
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display:"flex",flexDirection:"column",gap:5 }}>
+              <label style={{ fontSize:12,fontWeight:700,color:"#555",textTransform:"uppercase",letterSpacing:0.4 }}>Confirm New Password</label>
+              <input
+                type={showNew?"text":"password"}
+                placeholder="Repeat new password"
+                value={pwdForm.confirm}
+                onChange={e=>setPwdForm(f=>({...f,confirm:e.target.value}))}
+                style={{ padding:"10px 12px",border:"1.5px solid #e5e7eb",borderRadius:8,fontSize:14,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"sans-serif" }}
+              />
+            </div>
+
+            {pwdError   && <div style={{ fontSize:12,color:"#dc2626",background:"#fff5f5",borderRadius:7,padding:"8px 10px" }}>⚠ {pwdError}</div>}
+            {pwdSuccess  && <div style={{ fontSize:12,color:"#15803d",background:"#f0fdf4",borderRadius:7,padding:"8px 10px" }}>{pwdSuccess}</div>}
+
+            <button onClick={handleChangePassword} disabled={pwdLoading} style={{ background:pwdLoading?"#c0606f":"#800020",color:"#fff",border:"none",borderRadius:9,padding:"11px",fontWeight:700,cursor:pwdLoading?"not-allowed":"pointer",fontSize:14 }}>
+              {pwdLoading?"Updating…":"Update Password"}
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Details */}
-      <div style={{ fontSize:13, fontWeight:700, color:"#555", marginBottom:10 }}>Personal Details</div>
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:1, background:"#f3f4f6", borderRadius:10, overflow:"hidden", marginBottom:20 }}>
-        {rows.map(([label,val],i) => (
-          <div key={i} style={{ background:"#fff", padding:"10px 12px" }}>
-            <div style={{ fontSize:10, color:"#999", fontWeight:600, textTransform:"uppercase", letterSpacing:0.4, marginBottom:2 }}>{label}</div>
-            <div style={{ fontSize:13, color:"#111", fontWeight:500 }}>{val||"—"}</div>
+      <div style={{ fontSize:13,fontWeight:700,color:"#555",marginBottom:10 }}>Personal Details</div>
+      <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:"#f3f4f6",borderRadius:10,overflow:"hidden",marginBottom:20 }}>
+        {rows.map(([label,val],i)=>(
+          <div key={i} style={{ background:"#fff",padding:"10px 12px" }}>
+            <div style={{ fontSize:10,color:"#999",fontWeight:600,textTransform:"uppercase",letterSpacing:0.4,marginBottom:2 }}>{label}</div>
+            <div style={{ fontSize:13,color:"#111",fontWeight:500 }}>{val||"—"}</div>
           </div>
         ))}
       </div>
 
-      <button onClick={onSignOut} style={{
-        width:"100%", background:"#fff", color:"#800020",
-        border:"2px solid #800020", borderRadius:12,
-        padding:"13px", fontWeight:700, cursor:"pointer", fontSize:15,
-      }}>🚪 Sign Out</button>
+      <button onClick={onSignOut} style={{ width:"100%",background:"#fff",color:"#800020",border:"2px solid #800020",borderRadius:12,padding:"13px",fontWeight:700,cursor:"pointer",fontSize:15 }}>
+        🚪 Sign Out
+      </button>
     </div>
   );
 }
@@ -820,44 +874,47 @@ export default function MemberPortal() {
   const [treatRequests, setTreatRequests] = useState([]);
   const [welfare,       setWelfare]       = useState([]);
   const [packages,      setPackages]      = useState([]);
-  const [pendingDeposits, setPendingDeposits] = useState([]);
 
   useEffect(() => { if (user) loadAll(); }, [user]);
 
   async function loadAll() {
     setLoading(true);
 
-    // Get member record linked to this auth user
-    const { data: memberData } = await supabase
-      .from("members")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
+    try {
+      // Get member record linked to this auth user
+      const { data: memberData, error: memberError } = await supabase
+        .from("members")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle(); // use maybeSingle to avoid error when no row found
 
-    if (!memberData) { setLoading(false); return; }
-    setMember(memberData);
+      if (memberError) { console.error("Member fetch error:", memberError); setLoading(false); return; }
+      if (!memberData) { setLoading(false); return; }
+      setMember(memberData);
 
-    const mid = memberData.id;
-    const [sv, ln, lnReq, tr, trReq, wf, pk, pd] = await Promise.all([
-      supabase.from("savings").select("*").eq("member_id", mid).order("created_at",{ascending:false}),
-      supabase.from("loans").select("*").eq("members_id", mid).order("issue_date",{ascending:false}),
-      supabase.from("loan_requests").select("*").eq("member_id", mid).order("created_at",{ascending:false}),
-      supabase.from("treat").select("*").eq("member_id", mid).order("created_at",{ascending:false}),
-      supabase.from("treat_requests").select("*").eq("member_id", mid).order("created_at",{ascending:false}),
-      supabase.from("welfare_contributions").select("*").eq("member_id", mid).order("contribution_month",{ascending:false}),
-      supabase.from("saving_packages").select("*"),
-      supabase.from("savings_deposits").select("*").eq("member_id", mid).order("created_at",{ascending:false}),
-    ]);
+      const mid = memberData.id;
+      const [sv, ln, lnReq, tr, trReq, wf, pk] = await Promise.all([
+        supabase.from("savings").select("*").eq("member_id", mid).order("saving_date",{ascending:false}),
+        supabase.from("loans").select("*").eq("members_id", mid).order("issue_date",{ascending:false}),
+        supabase.from("loan_requests").select("*").eq("member_id", mid).order("created_at",{ascending:false}),
+        supabase.from("treat").select("*").eq("member_id", mid).order("created_at",{ascending:false}),
+        supabase.from("treat_requests").select("*").eq("member_id", mid).order("created_at",{ascending:false}),
+        supabase.from("welfare_contributions").select("*").eq("member_id", mid).order("contribution_month",{ascending:false}),
+        supabase.from("saving_packages").select("*"),
+      ]);
 
-    setSavings(sv.data        || []);
-    setLoans(ln.data          || []);
-    setLoanRequests(lnReq.data || []);
-    setTreatTx(tr.data        || []);
-    setTreatRequests(trReq.data || []);
-    setWelfare(wf.data        || []);
-    setPackages(pk.data       || []);
-    setPendingDeposits(pd.data || []);
-    setLoading(false);
+      setSavings(sv.data         || []);
+      setLoans(ln.data           || []);
+      setLoanRequests(lnReq.data || []);
+      setTreatTx(tr.data         || []);
+      setTreatRequests(trReq.data|| []);
+      setWelfare(wf.data         || []);
+      setPackages(pk.data        || []);
+    } catch (err) {
+      console.error("Portal load error:", err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   const tabs = [
@@ -943,5 +1000,3 @@ export default function MemberPortal() {
     </div>
   );
 }
-
-

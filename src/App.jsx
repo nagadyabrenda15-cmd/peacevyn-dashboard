@@ -12,6 +12,7 @@ import Fines          from "./pages/Fines";
 import SavingPackages from "./pages/SavingPackages";
 import Welfare        from "./pages/Welfare";
 import Treat          from "./pages/Treat";
+import UserManagement from "./pages/UserManagement";
 import Reports        from "./pages/Reports";
 import Requests       from "./pages/Requests";
 
@@ -38,6 +39,7 @@ function AdminLayout() {
           <Route path="/treat"    element={<Treat />} />
           <Route path="/reports"  element={<Reports />} />
           <Route path="/requests" element={<Requests />} />
+          <Route path="/users"    element={<UserManagement />} />
           <Route path="*"         element={<Navigate to="/" replace />} />
         </Routes>
       </div>
@@ -87,4 +89,4 @@ export default function App() {
     </AuthProvider>
   );
 }
-
+ 
