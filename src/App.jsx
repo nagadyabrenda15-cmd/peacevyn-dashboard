@@ -38,8 +38,8 @@ function AdminLayout() {
           <Route path="/welfare"  element={<Welfare />} />
           <Route path="/treat"    element={<Treat />} />
           <Route path="/reports"  element={<Reports />} />
-          <Route path="/requests" element={<Requests />} />
-          <Route path="/users"    element={<UserManagement />} />
+          <Route path="/requests" element={role === "admin" ?  <Requests /> : <Navigate to="/" replace />} />
+          <Route path="/users"    element={role === "admin" ? <UserManagement /> : <Navigate to="/" replace />} />
           <Route path="*"         element={<Navigate to="/" replace />} />
         </Routes>
       </div>

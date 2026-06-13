@@ -948,54 +948,153 @@ export default function MemberPortal() {
   }
 
   return (
-    <div style={{ maxWidth:480,margin:"0 auto",background:"#f8f7f5",minHeight:"100vh",position:"relative",fontFamily:"sans-serif" }}>
+    <div style={{ background:"#f8f7f5", minHeight:"100vh", fontFamily:"sans-serif" }}>
       <style>{`
         @keyframes spin{to{transform:rotate(360deg);}}
         input:focus,select:focus,textarea:focus{border-color:#800020!important;box-shadow:0 0 0 3px rgba(128,0,32,0.08);outline:none;}
+
+        /* ── Responsive layout ── */
+        .portal-shell {
+          display: flex;
+          flex-direction: column;
+          min-height: 100vh;
+        }
+        .portal-topbar {
+          background: #800020;
+          padding: 14px 20px 12px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          position: sticky;
+          top: 0;
+          z-index: 100;
+        }
+        .portal-body {
+          display: flex;
+          flex: 1;
+        }
+        /* Mobile: no side nav */
+        .portal-sidenav { display: none; }
+        .portal-content { padding: 16px 16px 90px; flex: 1; }
+        /* Mobile bottom nav */
+        .portal-bottomnav {
+          position: fixed; bottom: 0; left: 0; right: 0;
+          background: #fff; border-top: 1px solid #f0f0f0;
+          display: flex; z-index: 100;
+          box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+        }
+
+        /* Tablet & Desktop (768px+) */
+        @media (min-width: 768px) {
+          .portal-sidenav {
+            display: flex;
+            flex-direction: column;
+            width: 220px;
+            min-height: calc(100vh - 52px);
+            background: #fff;
+            border-right: 1px solid #f0e8ea;
+            padding: 16px 12px;
+            gap: 4px;
+            position: sticky;
+            top: 52px;
+            height: calc(100vh - 52px);
+            flex-shrink: 0;
+          }
+          .portal-content { padding: 24px 32px 32px; max-width: 860px; }
+          .portal-bottomnav { display: none; }
+        }
+
+        /* Large desktop (1100px+) */
+        @media (min-width: 1100px) {
+          .portal-content { padding: 28px 48px 40px; max-width: 960px; }
+        }
+
+        .sidenav-btn {
+          display: flex; align-items: center; gap: 10px;
+          padding: 10px 14px; border: none; border-radius: 9px;
+          background: none; cursor: pointer; width: 100%;
+          text-align: left; font-size: 14px; font-weight: 600;
+          color: #555; transition: background 0.15s;
+        }
+        .sidenav-btn:hover { background: #fff5f7; color: #800020; }
+        .sidenav-btn.active {
+          background: #800020; color: #fff;
+        }
+        .sidenav-btn .nav-icon { font-size: 18px; flex-shrink: 0; }
       `}</style>
 
-      {/* ── Top bar */}
-      <div style={{ background:"#800020",padding:"14px 16px 12px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:100 }}>
-        <div>
-          <div style={{ color:"rgba(255,255,255,0.75)",fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:0.5 }}>PeaceVyn</div>
-          <div style={{ color:"#fff",fontSize:14,fontWeight:700 }}>{member.full_name}</div>
-        </div>
-        <div style={{ background:"rgba(255,255,255,0.15)",borderRadius:8,padding:"4px 10px",fontSize:11,color:"#fff",fontWeight:700 }}>
-          {member.member_number}
-        </div>
-      </div>
+      <div className="portal-shell">
 
-      {/* ── Tab content */}
-      <div style={{ padding:"16px 16px 80px" }}>
-        {tab === "home"    && <HomeTab    member={member} savings={savings} loans={loans} treatTx={treatTx} welfare={welfare} packages={packages} />}
-        {tab === "savings" && <SavingsTab member={member} savings={savings} packages={packages} />}
-        {tab === "loan"    && <LoanTab    member={member} loans={loans} loanRequests={loanRequests} onRefresh={loadAll} />}
-        {tab === "treat"   && <TreatTab   member={member} treatTx={treatTx} treatRequests={treatRequests} onRefresh={loadAll} />}
-        {tab === "welfare" && <WelfareTab welfare={welfare} />}
-        {tab === "profile" && <ProfileTab member={member} packages={packages} onSignOut={signOut} />}
-      </div>
+        {/* ── Top bar */}
+        <div className="portal-topbar">
+          <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+            <img src="/logo-stacked.png" alt="PeaceVyn"
+              style={{ height:30, width:"auto", objectFit:"contain", filter:"brightness(0) invert(1)", opacity:0.9 }}
+              onError={e=>e.target.style.display="none"} />
+            <div>
+              <div style={{ color:"rgba(255,255,255,0.75)", fontSize:11, fontWeight:600, textTransform:"uppercase", letterSpacing:0.5 }}>PeaceVyn Member Portal</div>
+              <div style={{ color:"#fff", fontSize:14, fontWeight:700 }}>{member.full_name}</div>
+            </div>
+          </div>
+          <div style={{ background:"rgba(255,255,255,0.15)", borderRadius:8, padding:"4px 12px", fontSize:12, color:"#fff", fontWeight:700 }}>
+            {member.member_number}
+          </div>
+        </div>
 
-      {/* ── Bottom nav */}
-      <div style={{
-        position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",
-        width:"100%",maxWidth:480,
-        background:"#fff",borderTop:"1px solid #f0f0f0",
-        display:"flex",zIndex:100,
-        boxShadow:"0 -4px 20px rgba(0,0,0,0.08)",
-      }}>
-        {tabs.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)} style={{
-            flex:1,display:"flex",flexDirection:"column",alignItems:"center",
-            gap:3,padding:"10px 4px 12px",border:"none",
-            background:"none",cursor:"pointer",
-            borderTop: tab===t.key ? "2.5px solid #800020" : "2.5px solid transparent",
-          }}>
-            <span style={{ fontSize:20 }}>{t.icon}</span>
-            <span style={{ fontSize:10,fontWeight:700,color:tab===t.key?"#800020":"#aaa",letterSpacing:0.3 }}>
-              {t.label}
-            </span>
-          </button>
-        ))}
+        <div className="portal-body">
+
+          {/* ── Side nav (tablet/desktop only) */}
+          <nav className="portal-sidenav">
+            <div style={{ fontSize:11, fontWeight:700, color:"#aaa", textTransform:"uppercase", letterSpacing:0.6, padding:"4px 14px 8px" }}>
+              Navigation
+            </div>
+            {tabs.map(t => (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`sidenav-btn${tab === t.key ? " active" : ""}`}
+              >
+                <span className="nav-icon">{t.icon}</span>
+                <span>{t.label}</span>
+              </button>
+            ))}
+
+            <div style={{ marginTop:"auto", borderTop:"1px solid #f0e8ea", paddingTop:12 }}>
+              <button onClick={signOut} className="sidenav-btn" style={{ color:"#800020" }}>
+                <span className="nav-icon">🚪</span>
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </nav>
+
+          {/* ── Tab content */}
+          <div className="portal-content">
+            {tab === "home"    && <HomeTab    member={member} savings={savings} loans={loans} treatTx={treatTx} welfare={welfare} packages={packages} />}
+            {tab === "savings" && <SavingsTab member={member} savings={savings} packages={packages} />}
+            {tab === "loan"    && <LoanTab    member={member} loans={loans} loanRequests={loanRequests} onRefresh={loadAll} />}
+            {tab === "treat"   && <TreatTab   member={member} treatTx={treatTx} treatRequests={treatRequests} onRefresh={loadAll} />}
+            {tab === "welfare" && <WelfareTab welfare={welfare} />}
+            {tab === "profile" && <ProfileTab member={member} packages={packages} onSignOut={signOut} />}
+          </div>
+        </div>
+
+        {/* ── Bottom nav (mobile only) */}
+        <div className="portal-bottomnav">
+          {tabs.map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)} style={{
+              flex:1, display:"flex", flexDirection:"column", alignItems:"center",
+              gap:3, padding:"10px 4px 12px", border:"none",
+              background:"none", cursor:"pointer",
+              borderTop: tab===t.key ? "2.5px solid #800020" : "2.5px solid transparent",
+            }}>
+              <span style={{ fontSize:20 }}>{t.icon}</span>
+              <span style={{ fontSize:10, fontWeight:700, color:tab===t.key?"#800020":"#aaa", letterSpacing:0.3 }}>
+                {t.label}
+              </span>
+            </button>
+          ))}
+        </div>
+
       </div>
     </div>
   );

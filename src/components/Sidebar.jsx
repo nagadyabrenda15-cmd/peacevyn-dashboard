@@ -25,18 +25,21 @@ export default function Sidebar() {
   }
 
   const navItems = [
-    { to:"/",         label:"Dashboard",  icon:"📊" },
-    { to:"/members",  label:"Members",    icon:"👥" },
-    { to:"/savings",  label:"Savings",    icon:"💰" },
-    { to:"/loans",    label:"Loans",      icon:"📋" },
-    { to:"/fines",    label:"Fines",      icon:"⚠️" },
-    { to:"/packages", label:"Packages",   icon:"📦" },
-    { to:"/welfare",  label:"Welfare",    icon:"🤝" },
-    { to:"/treat",    label:"The Treat",  icon:"🏦" },
-    { to:"/reports",  label:"Reports",    icon:"📊" },
-    { to:"/requests", label:"Requests",   icon:"📬", badge: pending },
-    { to:"/users",    label:"Users",      icon:"🔐" },
-  ];
+  { to:"/",         label:"Dashboard",  icon:"📊" },
+  { to:"/members",  label:"Members",    icon:"👥" },
+  { to:"/savings",  label:"Savings",    icon:"💰" },
+  { to:"/loans",    label:"Loans",      icon:"📋" },
+  { to:"/fines",    label:"Fines",      icon:"⚠️" },
+  { to:"/packages", label:"Packages",   icon:"📦" },
+  { to:"/welfare",  label:"Welfare",    icon:"🤝" },
+  { to:"/treat",    label:"The Treat",  icon:"🏦" },
+  { to:"/reports",  label:"Reports",    icon:"📊" },
+  // Admin only
+  ...(role === "admin" ? [
+    { to:"/requests", label:"Requests", icon:"📬", badge: pending },
+    { to:"/users",    label:"Users",    icon:"🔐" },
+  ] : []),
+];
 
   return (
     <div style={{
