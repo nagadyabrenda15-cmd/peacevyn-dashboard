@@ -1,8 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
-import Login          from "./pages/Login";
-import MemberPortal   from "./pages/MemberPortal";
+import Login                from "./pages/Login";
+import PasswordResetRequest from "./pages/PasswordResetRequest";
+import MemberPortal         from "./pages/MemberPortal";
 import Sidebar        from "./components/Sidebar";
 import Dashboard      from "./pages/Dashboard";
 import Members        from "./pages/Members";
@@ -15,6 +16,7 @@ import Treat          from "./pages/Treat";
 import UserManagement from "./pages/UserManagement";
 import Reports        from "./pages/Reports";
 import Requests       from "./pages/Requests";
+import Messages       from "./pages/Messages";
 
 // ── Admin / Staff layout with sidebar
 function AdminLayout() {
@@ -38,8 +40,9 @@ function AdminLayout() {
           <Route path="/welfare"  element={<Welfare />} />
           <Route path="/treat"    element={<Treat />} />
           <Route path="/reports"  element={<Reports />} />
-          <Route path="/requests" element={role === "admin" ?  <Requests /> : <Navigate to="/" replace />} />
-          <Route path="/users"    element={role === "admin" ? <UserManagement /> : <Navigate to="/" replace />} />
+          <Route path="/requests" element={role==="admin" ? <Requests />       : <Navigate to="/" replace />} />
+          <Route path="/users"    element={role==="admin" ? <UserManagement /> : <Navigate to="/" replace />} />
+          <Route path="/messages" element={role==="admin" ? <Messages />       : <Navigate to="/" replace />} />
           <Route path="*"         element={<Navigate to="/" replace />} />
         </Routes>
       </div>
@@ -81,12 +84,12 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/login"  element={<PublicRoute><Login /></PublicRoute>} />
-          <Route path="/portal" element={<MemberRoute />} />
+          <Route path="/login"           element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/forgot-password" element={<PasswordResetRequest />} />
+          <Route path="/portal"          element={<MemberRoute />} />
           <Route path="/*"      element={<AdminLayout />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
   );
 }
- 

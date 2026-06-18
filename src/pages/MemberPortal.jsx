@@ -135,130 +135,135 @@ function Badge({ text }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // TAB: HOME
 // ═══════════════════════════════════════════════════════════════════════════════
-function HomeTab({ member, savings, loans, treatTx, welfare, packages }) {
+function HomeTab({ member, savings, loans, treatTx, welfare, packages, profilePic, reminders }) {
   const savingsBalance = savings.reduce((a,s) => s.transaction_type!=="withdrawal" ? a+Number(s.amount) : a-Number(s.amount), 0);
   const activeLoan     = loans.find(l => l.loan_status === "approved");
   const loanBalance    = activeLoan ? Number(activeLoan.balance||0) : 0;
-
-  // Treat — only non-subscription txs count for balance
   const treatDeposits  = treatTx.filter(t=>t.transaction_type!=="subscription");
   const isEnrolled     = treatTx.some(t=>t.transaction_type==="subscription");
   const treatBalance   = treatDeposits.length > 0 ? Number(treatDeposits[0].balance_after) : 0;
   const lastTreatTx    = treatDeposits[0];
-
-  // Most recent savings tx
   const lastSavingsTx  = savings[0];
-
-  // Welfare — check if paid this month
   const now            = new Date();
   const thisMonth      = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
-  const paidThisMonth  = welfare.some(w => {
-    const d = w.created_at || w.contribution_date || "";
-    return d.startsWith(thisMonth);
-  });
+  const paidThisMonth  = welfare.some(w => w.contribution_month?.startsWith(thisMonth));
+  const pkg            = packages.find(p => p.id === member?.saving_package_id);
 
-  const pkg = packages.find(p => p.id === member?.saving_package_id);
+  // Shared card shell — same shape/design as the reminder card
+  function InfoCard({ icon, label, value, sub, color, filled }) {
+    return (
+      <div style={{
+        background: filled ? color : "#fff",
+        borderRadius:12, padding:"14px 16px",
+        border: filled ? "none" : `1px solid ${color}40`,
+        borderLeft: `4px solid ${filled ? "rgba(255,255,255,0.5)" : color}`,
+        display:"flex", gap:12, alignItems:"flex-start",
+      }}>
+        <span style={{fontSize:22,flexShrink:0,marginTop:1}}>{icon}</span>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{
+            fontSize:11, fontWeight:800,
+            color: filled ? "rgba(255,255,255,0.85)" : color,
+            textTransform:"uppercase", letterSpacing:0.5, marginBottom:3,
+          }}>{label}</div>
+          <div style={{
+            fontSize:17, fontWeight:800,
+            color: filled ? "#fff" : "#111",
+            fontFamily:"Georgia, serif", lineHeight:1.2,
+          }}>{value}</div>
+          {sub && (
+            <div style={{
+              fontSize:12, marginTop:3, lineHeight:1.4,
+              color: filled ? "rgba(255,255,255,0.8)" : "#888",
+            }}>{sub}</div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: "0 0 16px" }}>
-      {/* Welcome */}
+    <div>
+
+      {/* ── Welcome header — no avatar here anymore */}
       <div style={{
-        background: "linear-gradient(135deg,#800020,#b00030)",
-        borderRadius: 16, padding: "20px", marginBottom: 16,
-        display: "flex", justifyContent: "space-between", alignItems: "flex-start",
+        background:"linear-gradient(135deg,#800020,#b00030)",
+        borderRadius:14, padding:"16px 18px", marginBottom:10,
+        display:"flex", alignItems:"center", justifyContent:"space-between",
       }}>
-        <div>
-          <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 13 }}>Welcome back,</div>
-          <div style={{ color: "#fff", fontSize: 20, fontWeight: 800, fontFamily: "Georgia, serif", marginTop: 2 }}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{color:"rgba(255,255,255,0.75)",fontSize:12}}>Welcome back,</div>
+          <div style={{color:"#fff",fontSize:19,fontWeight:800,fontFamily:"Georgia, serif",lineHeight:1.2,marginTop:1}}>
             {member?.full_name?.split(" ")[0]} 👋
           </div>
-          <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 12, marginTop: 4 }}>
+          <div style={{color:"rgba(255,255,255,0.65)",fontSize:12,marginTop:3}}>
             {member?.member_number} · {pkg?.package_name || "—"}
           </div>
         </div>
-        <div style={{ background: "rgba(255,255,255,0.15)", borderRadius: 10, padding: "8px 14px", textAlign: "center" }}>
-          <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 10, fontWeight: 600 }}>STATUS</div>
-          <div style={{ color: "#fff", fontSize: 13, fontWeight: 800, textTransform: "uppercase" }}>
-            {member?.member_status || "—"}
-          </div>
+        <div style={{background:"rgba(255,255,255,0.15)",borderRadius:8,padding:"6px 12px",textAlign:"center",flexShrink:0}}>
+          <div style={{color:"rgba(255,255,255,0.7)",fontSize:9,fontWeight:600,textTransform:"uppercase"}}>STATUS</div>
+          <div style={{color:"#fff",fontSize:12,fontWeight:800,textTransform:"uppercase"}}>{member?.member_status||"—"}</div>
         </div>
       </div>
 
-      {/* Balance Cards */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {/* Savings */}
-        <div style={{ background: "linear-gradient(135deg,#800020,#b00030)", borderRadius: 14, padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Savings Balance</div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", fontFamily: "Georgia, serif", marginTop: 4 }}>UGX {fmt(savingsBalance)}</div>
-            {lastSavingsTx ? (
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginTop: 3 }}>
-                Last: {lastSavingsTx.transaction_type} · {lastSavingsTx.saving_date || lastSavingsTx.created_at?.split("T")[0] || "—"}
-              </div>
-            ) : <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>No transactions yet</div>}
-          </div>
-          <div style={{ fontSize: 32, opacity: 0.3 }}>💰</div>
+      {/* ── Reminders — fully filled red */}
+      {reminders && reminders.length > 0 && (
+        <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:10}}>
+          {reminders.map((r,i)=>(
+            <InfoCard key={i}
+              icon={r.icon} label="Reminder" value={r.msg.split(".")[0]+"."}
+              sub={r.msg.split(".").slice(1).join(".").trim() || null}
+              color={r.color} filled
+            />
+          ))}
         </div>
+      )}
 
-        {/* Loan */}
-        <div style={{ background: activeLoan ? "linear-gradient(135deg,#2563eb,#1d4ed8)" : "#f9fafb", borderRadius: 14, padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", border: activeLoan ? "none" : "1px dashed #e5e7eb" }}>
-          <div>
-            <div style={{ fontSize: 12, color: activeLoan ? "rgba(255,255,255,0.8)" : "#888", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Active Loan</div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: activeLoan ? "#fff" : "#555", fontFamily: "Georgia, serif", marginTop: 4 }}>
-              {activeLoan ? `UGX ${fmt(loanBalance)}` : "No active loan"}
-            </div>
-            {activeLoan && (
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginTop: 3 }}>
-                Due: {activeLoan.due_date} · Issued: {activeLoan.issue_date}
-              </div>
-            )}
-          </div>
-          <div style={{ fontSize: 32, opacity: 0.3 }}>📋</div>
-        </div>
-
-        {/* Treat */}
-        {isEnrolled ? (
-          <div style={{ background: "linear-gradient(135deg,#15803d,#166534)", borderRadius: 14, padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Treat Account</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", fontFamily: "Georgia, serif", marginTop: 4 }}>UGX {fmt(treatBalance)}</div>
-              {lastTreatTx ? (
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginTop: 3 }}>
-                  Last: {lastTreatTx.transaction_type} · {lastTreatTx.transaction_date || "—"}
-                </div>
-              ) : <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>No deposits yet</div>}
-            </div>
-            <div style={{ fontSize: 32, opacity: 0.3 }}>🏦</div>
-          </div>
-        ) : (
-          <div style={{ background: "#f3f4f6", borderRadius: 14, padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", opacity: 0.7 }}>
-            <div>
-              <div style={{ fontSize: 12, color: "#888", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Treat Account</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: "#555", marginTop: 4 }}>🔒 Subscribe to activate</div>
-              <div style={{ fontSize: 11, color: "#aaa", marginTop: 3 }}>Pay UGX 5,000 to join</div>
-            </div>
-            <div style={{ fontSize: 32, opacity: 0.3 }}>🏦</div>
-          </div>
-        )}
-
-        {/* Welfare */}
-        <div style={{
-          background: paidThisMonth ? "linear-gradient(135deg,#15803d,#166534)" : "linear-gradient(135deg,#dc2626,#b91c1c)",
-          borderRadius: 14, padding: "16px 18px",
-          display: "flex", justifyContent: "space-between", alignItems: "center",
-        }}>
-          <div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>Welfare — This Month</div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", fontFamily: "Georgia, serif", marginTop: 4 }}>
-              {paidThisMonth ? "✓ Cleared" : "✗ Not Cleared"}
-            </div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginTop: 3 }}>
-              {paidThisMonth ? "Welfare contribution paid" : "Welfare not yet paid this month"}
-            </div>
-          </div>
-          <div style={{ fontSize: 32, opacity: 0.3 }}>🤝</div>
-        </div>
+      {/* ── Info cards — compact natural height on mobile, 2-col grid on tablet/desktop */}
+      <div className="home-cards-grid">
+        <InfoCard
+          icon="💰" label="Savings Balance" value={`UGX ${fmt(savingsBalance)}`}
+          sub={lastSavingsTx ? `Last: ${lastSavingsTx.saving_date||lastSavingsTx.created_at?.split("T")[0]||"—"}` : "No transactions yet"}
+          color="#800020"
+        />
+        <InfoCard
+          icon="📋" label="Active Loan" value={activeLoan?`UGX ${fmt(loanBalance)}`:"No active loan"}
+          sub={activeLoan ? `Due: ${activeLoan.due_date||"—"}` : "Visit the Loan tab to request one"}
+          color="#2563eb"
+        />
+        <InfoCard
+          icon="🏦" label="Treat Account" value={isEnrolled?`UGX ${fmt(treatBalance)}`:"🔒 Not subscribed"}
+          sub={isEnrolled ? (lastTreatTx?`Last: ${lastTreatTx.transaction_date||"—"}`:"No deposits yet") : "UGX 5,000 to activate"}
+          color="#15803d"
+        />
+        <InfoCard
+          icon="🤝" label={`Welfare — ${now.toLocaleString("default",{month:"long"})} ${now.getFullYear()}`}
+          value={paidThisMonth?"✓ Cleared":"✗ Not Cleared"}
+          sub={paidThisMonth ? "Thank you for contributing this month" : "Please pay your welfare fee this month"}
+          color={paidThisMonth?"#15803d":"#dc2626"}
+        />
       </div>
+
+      <style>{`
+        .home-cards-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        @media (min-width: 768px) {
+          .home-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+          }
+        }
+        @media (min-width: 1100px) {
+          .home-cards-grid {
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+          }
+        }
+      `}</style>
+
     </div>
   );
 }
@@ -647,7 +652,11 @@ function WelfareTab({ welfare }) {
   // Check if paid this month
   const thisMonth     = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
   const paidThisMonth = welfare.some(w => w.contribution_month?.startsWith(thisMonth));
-  const totalPaid     = welfare.reduce((a,w)=>a+Number(w.amount||0),0);
+
+  // Most recent contribution — used to show "amount per month" and "last paid"
+  const sorted      = [...welfare].sort((a,b) => new Date(b.contribution_month) - new Date(a.contribution_month));
+  const lastPaid     = sorted[0];
+  const monthlyFee   = lastPaid?.amount || 0;
 
   // Build month history — last 12 months
   const monthHistory = [];
@@ -688,12 +697,17 @@ function WelfareTab({ welfare }) {
       {/* Summary */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
         <div style={{background:"#fff",borderRadius:10,padding:"12px 14px",border:"1px solid #f3e8ea"}}>
-          <div style={{fontSize:11,color:"#aaa",fontWeight:600,textTransform:"uppercase",letterSpacing:0.4}}>Total Paid</div>
-          <div style={{fontSize:18,fontWeight:800,color:"#800020",marginTop:2}}>UGX {fmt(totalPaid)}</div>
+          <div style={{fontSize:11,color:"#aaa",fontWeight:600,textTransform:"uppercase",letterSpacing:0.4}}>Amount Per Month</div>
+          <div style={{fontSize:18,fontWeight:800,color:"#800020",marginTop:2}}>UGX {fmt(monthlyFee)}</div>
         </div>
         <div style={{background:"#fff",borderRadius:10,padding:"12px 14px",border:"1px solid #f3e8ea"}}>
-          <div style={{fontSize:11,color:"#aaa",fontWeight:600,textTransform:"uppercase",letterSpacing:0.4}}>Months Paid</div>
-          <div style={{fontSize:18,fontWeight:800,color:"#800020",marginTop:2}}>{welfare.length}</div>
+          <div style={{fontSize:11,color:"#aaa",fontWeight:600,textTransform:"uppercase",letterSpacing:0.4}}>Last Paid</div>
+          <div style={{fontSize:14,fontWeight:800,color:"#800020",marginTop:2}}>
+            {lastPaid ? `${formatMonth(lastPaid.contribution_month)}` : "—"}
+          </div>
+          <div style={{fontSize:11,color:"#aaa",marginTop:1}}>
+            {lastPaid?.created_at ? new Date(lastPaid.created_at).toLocaleDateString() : ""}
+          </div>
         </div>
       </div>
 
@@ -731,31 +745,262 @@ function WelfareTab({ welfare }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// TAB: CONTACTS
+// ═══════════════════════════════════════════════════════════════════════════════
+const DEPT_CONTACTS = [
+  {
+    label:"PeaceVyn Investments", color:"#800020", icon:"🏢",
+    entries:[
+      { name:"Main Line",      number:"+256 700 000 001", type:"call"     },
+      { name:"WhatsApp",       number:"+256 700 000 002", type:"whatsapp" },
+      { name:"Official Email", number:"info@peacevyn.com", type:"email"   },
+    ],
+  },
+  {
+    label:"Flair Foods Contacts", color:"#ca8a04", icon:"🍽️",
+    entries:[
+      { name:"Flair Foods WhatsApp", number:"+256 700 000 007", type:"whatsapp" },
+      { name:"Flair Foods Calls",    number:"+256 700 000 008", type:"call"     },
+    ],
+  },
+  {
+    label:"Emergency Committee", color:"#7e22ce", icon:"🚨",
+    entries:[
+      { name:"EC WhatsApp",   number:"+256 700 000 005", type:"whatsapp" },
+      { name:"EC Calls Only", number:"+256 700 000 006", type:"call"     },
+    ],
+  },
+  {
+    label:"Peace Printery Services", color:"#2563eb", icon:"🖨️",
+    entries:[
+      { name:"Calls",    number:"+256 700 000 009", type:"call"     },
+      { name:"WhatsApp", number:"+256 700 000 009", type:"whatsapp" },
+    ],
+  },
+];
+
+function typeIcon(type) {
+  if (type==="whatsapp") return "💬";
+  if (type==="email")    return "📧";
+  return "📞";
+}
+
+function typeLabel(type) {
+  if (type==="whatsapp") return "WhatsApp";
+  if (type==="email")    return "Email";
+  return "Call";
+}
+
+function handleContactTap(entry) {
+  if (entry.type==="whatsapp") {
+    const num = entry.number.replace(/\s+/g,"").replace("+","");
+    window.open(`https://wa.me/${num}`,"_blank");
+  } else if (entry.type==="email") {
+    window.open(`mailto:${entry.number}`,"_blank");
+  } else {
+    window.open(`tel:${entry.number}`,"_blank");
+  }
+}
+
+function ContactsTab({ member, onReplyRead }) {
+  const [messages,   setMessages]   = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [loading,    setLoading]    = useState(true);
+
+  useEffect(() => { loadMessages(); markRepliesRead(); }, []);
+
+  async function loadMessages() {
+    setLoading(true);
+    const { data } = await supabase
+      .from("member_comments")
+      .select("*")
+      .eq("member_id", member.id)
+      .order("created_at",{ascending:true})
+      .limit(100);
+    setMessages(data||[]);
+    setLoading(false);
+  }
+
+  async function markRepliesRead() {
+    await supabase
+      .from("member_comments")
+      .update({ read_by_member: true })
+      .eq("member_id", member.id)
+      .eq("is_admin_reply", true)
+      .eq("read_by_member", false);
+    if (onReplyRead) onReplyRead();
+  }
+
+  async function handleSend() {
+    if (!newMessage.trim()) return;
+    setSubmitting(true);
+    const { error } = await supabase.from("member_comments").insert([{
+      member_id:     member.id,
+      member_name:   member.full_name,
+      member_number: member.member_number,
+      content:       newMessage.trim(),
+      is_admin_reply: false,
+    }]);
+    if (error) {
+      alert("Could not send message: " + error.message);
+      setSubmitting(false);
+      return;
+    }
+    setNewMessage("");
+    setSubmitting(false);
+    loadMessages();
+  }
+
+  return (
+    <div>
+      <div style={{marginBottom:20}}>
+        <h2 style={{margin:"0 0 4px",fontSize:20,fontWeight:800,color:"#800020",fontFamily:"Georgia, serif"}}>Contacts & Support</h2>
+        <p style={{margin:0,fontSize:13,color:"#888"}}>Tap any contact to call, WhatsApp or email directly</p>
+      </div>
+
+      {/* Contact departments */}
+      {DEPT_CONTACTS.map((dept,di)=>(
+        <div key={di} style={{background:"#fff",borderRadius:14,boxShadow:"0 2px 10px rgba(0,0,0,0.06)",overflow:"hidden",marginBottom:14,border:`1px solid ${dept.color}20`}}>
+          <div style={{background:`linear-gradient(135deg,${dept.color},${dept.color}cc)`,padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontSize:22}}>{dept.icon}</span>
+            <span style={{color:"#fff",fontWeight:800,fontSize:15,fontFamily:"Georgia, serif"}}>{dept.label}</span>
+          </div>
+          <div style={{padding:"6px 0"}}>
+            {dept.entries.map((e,ei)=>(
+              <button key={ei} onClick={()=>handleContactTap(e)} style={{
+                width:"100%",display:"flex",alignItems:"center",gap:14,
+                padding:"12px 16px",border:"none",background:"#fff",cursor:"pointer",
+                borderBottom: ei<dept.entries.length-1?"1px solid #f3f4f6":"none",
+              }}>
+                <div style={{width:40,height:40,borderRadius:10,flexShrink:0,background:`${dept.color}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>
+                  {typeIcon(e.type)}
+                </div>
+                <div style={{flex:1,textAlign:"left"}}>
+                  <div style={{fontSize:14,fontWeight:700,color:"#111"}}>{e.name}</div>
+                  <div style={{fontSize:12,color:"#888",marginTop:1}}>{e.number}</div>
+                </div>
+                <span style={{fontSize:11,fontWeight:700,color:dept.color,background:`${dept.color}15`,padding:"4px 10px",borderRadius:99}}>
+                  {typeLabel(e.type)}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {/* Private message thread with PeaceVyn */}
+      <div style={{marginTop:8}}>
+        <h3 style={{fontSize:15,fontWeight:800,color:"#111",margin:"0 0 6px",fontFamily:"Georgia, serif"}}>💬 Message PeaceVyn</h3>
+        <p style={{fontSize:12,color:"#888",margin:"0 0 14px"}}>This is a private thread between you and the PeaceVyn team.</p>
+
+        {/* Thread */}
+        <div style={{background:"#fff",borderRadius:12,border:"1px solid #f0e8ea",marginBottom:14,maxHeight:380,overflowY:"auto",padding:"14px"}}>
+          {loading ? (
+            <div style={{textAlign:"center",padding:"20px 0",color:"#aaa",fontSize:13}}>Loading…</div>
+          ) : messages.length===0 ? (
+            <div style={{textAlign:"center",padding:"24px 0",color:"#aaa"}}>
+              <div style={{fontSize:32,marginBottom:8}}>💬</div>
+              <p style={{margin:0,fontSize:13}}>No messages yet. Say hello!</p>
+            </div>
+          ) : (
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              {messages.map((m,i)=>(
+                <div key={i} style={{
+                  display:"flex",
+                  justifyContent: m.is_admin_reply ? "flex-start" : "flex-end",
+                }}>
+                  <div style={{
+                    maxWidth:"80%",
+                    background: m.is_admin_reply ? "#f3f4f6" : "#800020",
+                    color: m.is_admin_reply ? "#111" : "#fff",
+                    borderRadius: m.is_admin_reply ? "4px 14px 14px 14px" : "14px 4px 14px 14px",
+                    padding:"9px 13px",
+                  }}>
+                    {m.is_admin_reply && (
+                      <div style={{fontSize:10,fontWeight:800,color:"#800020",marginBottom:3}}>PeaceVyn Team</div>
+                    )}
+                    <div style={{fontSize:13,lineHeight:1.5}}>{m.content}</div>
+                    <div style={{fontSize:10,opacity:0.6,marginTop:4,textAlign:"right"}}>
+                      {m.created_at?new Date(m.created_at).toLocaleString([],{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}):"—"}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Composer */}
+        <div style={{background:"#fff",borderRadius:12,padding:"12px",border:"1px solid #f0e8ea",display:"flex",gap:8,alignItems:"flex-end"}}>
+          <textarea rows={1} placeholder="Type a message…" value={newMessage}
+            onChange={e=>setNewMessage(e.target.value.slice(0,500))}
+            onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSend();}}}
+            style={{flex:1,border:"1.5px solid #e5e7eb",borderRadius:8,padding:"9px 12px",fontSize:14,outline:"none",fontFamily:"sans-serif",resize:"none",boxSizing:"border-box",color:"#111"}}/>
+          <button onClick={handleSend} disabled={submitting||!newMessage.trim()} style={{
+            background:submitting||!newMessage.trim()?"#e5e7eb":"#800020",
+            color:submitting||!newMessage.trim()?"#aaa":"#fff",
+            border:"none",borderRadius:8,padding:"10px 16px",
+            fontWeight:700,cursor:submitting||!newMessage.trim()?"not-allowed":"pointer",fontSize:13,flexShrink:0,
+          }}>{submitting?"…":"Send"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // TAB: PROFILE
 // ═══════════════════════════════════════════════════════════════════════════════
-function ProfileTab({ member, packages, onSignOut }) {
+function ProfileTab({ member, packages, profilePic, onPicUpdate, onSignOut }) {
   const pkg      = packages.find(p => p.id === member?.saving_package_id);
   const initials = member?.full_name?.split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase() || "?";
 
   const [showChangePwd, setShowChangePwd] = useState(false);
-  const [pwdForm,       setPwdForm]       = useState({ current:"", newPwd:"", confirm:"" });
+  const [pwdForm,       setPwdForm]       = useState({ newPwd:"", confirm:"" });
   const [pwdError,      setPwdError]      = useState("");
   const [pwdSuccess,    setPwdSuccess]    = useState("");
   const [pwdLoading,    setPwdLoading]    = useState(false);
-  const [showCurrent,   setShowCurrent]   = useState(false);
   const [showNew,       setShowNew]       = useState(false);
+  const [picLoading,    setPicLoading]    = useState(false);
+  const [picError,      setPicError]      = useState("");
+  const fileRef = useState(null);
 
   async function handleChangePassword() {
     setPwdError(""); setPwdSuccess("");
-    if (!pwdForm.newPwd || pwdForm.newPwd.length < 6) { setPwdError("New password must be at least 6 characters."); return; }
+    if (!pwdForm.newPwd || pwdForm.newPwd.length < 6) { setPwdError("Min 6 characters."); return; }
     if (pwdForm.newPwd !== pwdForm.confirm) { setPwdError("Passwords do not match."); return; }
     setPwdLoading(true);
     const { error } = await supabase.auth.updateUser({ password: pwdForm.newPwd });
     setPwdLoading(false);
     if (error) { setPwdError(error.message); return; }
-    setPwdSuccess("✓ Password changed successfully!");
-    setPwdForm({ current:"", newPwd:"", confirm:"" });
+    setPwdSuccess("✓ Password changed!");
+    setPwdForm({ newPwd:"", confirm:"" });
     setTimeout(() => { setShowChangePwd(false); setPwdSuccess(""); }, 2000);
+  }
+
+  async function handlePicUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!["image/jpeg","image/png","image/webp"].includes(file.type)) {
+      setPicError("Only JPG, PNG or WebP allowed."); return;
+    }
+    if (file.size > 2 * 1024 * 1024) { setPicError("Max file size is 2MB."); return; }
+    setPicError(""); setPicLoading(true);
+
+    const { error } = await supabase.storage
+      .from("profile-pics")
+      .upload(`${member.id}/avatar.jpg`, file, {
+        upsert: true,
+        contentType: file.type,
+      });
+
+    setPicLoading(false);
+    if (error) { setPicError(error.message); return; }
+
+    // Refresh pic in parent
+    const { data } = supabase.storage.from("profile-pics").getPublicUrl(`${member.id}/avatar.jpg`);
+    onPicUpdate(data.publicUrl + "?t=" + Date.now());
   }
 
   const rows = [
@@ -775,14 +1020,31 @@ function ProfileTab({ member, packages, onSignOut }) {
 
   return (
     <div>
-      {/* Profile hero */}
+      {/* Profile hero with pic upload */}
       <div style={{ background:"linear-gradient(135deg,#800020,#b00030)",borderRadius:16,padding:"24px 20px",marginBottom:16,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center" }}>
-        <div style={{ width:80,height:80,borderRadius:"50%",background:"rgba(255,255,255,0.25)",border:"3px solid rgba(255,255,255,0.5)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:30,color:"#fff",marginBottom:12,letterSpacing:1,boxShadow:"0 4px 16px rgba(0,0,0,0.2)" }}>
-          {initials}
-        </div>
+
+        {/* Avatar with upload overlay */}
+        <label style={{ cursor:"pointer", position:"relative", marginBottom:12 }}>
+          <div style={{ width:80,height:80,borderRadius:"50%",background:"rgba(255,255,255,0.25)",border:"3px solid rgba(255,255,255,0.5)",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:30,color:"#fff",boxShadow:"0 4px 16px rgba(0,0,0,0.2)" }}>
+            {profilePic
+              ? <img src={profilePic} alt="profile" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+              : initials
+            }
+          </div>
+          {/* Camera overlay */}
+          <div style={{ position:"absolute",bottom:0,right:0,width:26,height:26,background:"#fff",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 6px rgba(0,0,0,0.2)",fontSize:14 }}>
+            {picLoading ? "⏳" : "📷"}
+          </div>
+          <input type="file" accept="image/*" onChange={handlePicUpload}
+            style={{ display:"none" }} disabled={picLoading} />
+        </label>
+
+        {picError && <div style={{fontSize:11,color:"#fca5a5",marginBottom:6}}>{picError}</div>}
+        <div style={{fontSize:11,color:"rgba(255,255,255,0.6)",marginBottom:8}}>Tap 📷 to change photo</div>
+
         <div style={{ color:"#fff",fontSize:20,fontWeight:800,fontFamily:"Georgia, serif" }}>{member?.full_name}</div>
         <div style={{ color:"rgba(255,255,255,0.75)",fontSize:13,marginTop:4 }}>{member?.member_number}</div>
-        <div style={{ marginTop:8,display:"flex",gap:8 }}>
+        <div style={{ marginTop:8,display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center" }}>
           <span style={{ background:"rgba(255,255,255,0.2)",color:"#fff",fontSize:11,fontWeight:700,padding:"4px 12px",borderRadius:99,textTransform:"capitalize" }}>
             {member?.member_status}
           </span>
@@ -790,48 +1052,33 @@ function ProfileTab({ member, packages, onSignOut }) {
         </div>
       </div>
 
-      {/* Change Password Section */}
+      {/* Change Password */}
       <div style={{ marginBottom:16 }}>
-        <button
-          onClick={()=>setShowChangePwd(s=>!s)}
-          style={{ width:"100%",background:showChangePwd?"#fff5f7":"#fff",color:"#800020",border:"2px solid #800020",borderRadius:12,padding:"12px",fontWeight:700,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8 }}
-        >
-          🔑 {showChangePwd ? "Cancel" : "Change Password"}
+        <button onClick={()=>setShowChangePwd(s=>!s)} style={{ width:"100%",background:showChangePwd?"#fff5f7":"#fff",color:"#800020",border:"2px solid #800020",borderRadius:12,padding:"12px",fontWeight:700,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8 }}>
+          🔑 {showChangePwd?"Cancel":"Change Password"}
         </button>
 
         {showChangePwd && (
           <div style={{ background:"#fff",borderRadius:12,padding:"16px",marginTop:10,border:"1px solid #f9e0e4",display:"flex",flexDirection:"column",gap:12 }}>
-
             <div style={{ display:"flex",flexDirection:"column",gap:5 }}>
               <label style={{ fontSize:12,fontWeight:700,color:"#555",textTransform:"uppercase",letterSpacing:0.4 }}>New Password</label>
               <div style={{ position:"relative" }}>
-                <input
-                  type={showNew?"text":"password"}
-                  placeholder="Min. 6 characters"
-                  value={pwdForm.newPwd}
+                <input type={showNew?"text":"password"} placeholder="Min 6 characters" value={pwdForm.newPwd}
                   onChange={e=>setPwdForm(f=>({...f,newPwd:e.target.value}))}
-                  style={{ padding:"10px 40px 10px 12px",border:"1.5px solid #e5e7eb",borderRadius:8,fontSize:14,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"sans-serif" }}
-                />
+                  style={{ padding:"10px 40px 10px 12px",border:"1.5px solid #e5e7eb",borderRadius:8,fontSize:14,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"sans-serif" }}/>
                 <button onClick={()=>setShowNew(s=>!s)} style={{ position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:15,color:"#888",padding:0 }}>
                   {showNew?"🙈":"👁"}
                 </button>
               </div>
             </div>
-
             <div style={{ display:"flex",flexDirection:"column",gap:5 }}>
-              <label style={{ fontSize:12,fontWeight:700,color:"#555",textTransform:"uppercase",letterSpacing:0.4 }}>Confirm New Password</label>
-              <input
-                type={showNew?"text":"password"}
-                placeholder="Repeat new password"
-                value={pwdForm.confirm}
+              <label style={{ fontSize:12,fontWeight:700,color:"#555",textTransform:"uppercase",letterSpacing:0.4 }}>Confirm Password</label>
+              <input type={showNew?"text":"password"} placeholder="Repeat new password" value={pwdForm.confirm}
                 onChange={e=>setPwdForm(f=>({...f,confirm:e.target.value}))}
-                style={{ padding:"10px 12px",border:"1.5px solid #e5e7eb",borderRadius:8,fontSize:14,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"sans-serif" }}
-              />
+                style={{ padding:"10px 12px",border:"1.5px solid #e5e7eb",borderRadius:8,fontSize:14,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"sans-serif" }}/>
             </div>
-
             {pwdError   && <div style={{ fontSize:12,color:"#dc2626",background:"#fff5f5",borderRadius:7,padding:"8px 10px" }}>⚠ {pwdError}</div>}
             {pwdSuccess  && <div style={{ fontSize:12,color:"#15803d",background:"#f0fdf4",borderRadius:7,padding:"8px 10px" }}>{pwdSuccess}</div>}
-
             <button onClick={handleChangePassword} disabled={pwdLoading} style={{ background:pwdLoading?"#c0606f":"#800020",color:"#fff",border:"none",borderRadius:9,padding:"11px",fontWeight:700,cursor:pwdLoading?"not-allowed":"pointer",fontSize:14 }}>
               {pwdLoading?"Updating…":"Update Password"}
             </button>
@@ -839,7 +1086,7 @@ function ProfileTab({ member, packages, onSignOut }) {
         )}
       </div>
 
-      {/* Details */}
+      {/* Personal Details */}
       <div style={{ fontSize:13,fontWeight:700,color:"#555",marginBottom:10 }}>Personal Details</div>
       <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:"#f3f4f6",borderRadius:10,overflow:"hidden",marginBottom:20 }}>
         {rows.map(([label,val],i)=>(
@@ -874,6 +1121,8 @@ export default function MemberPortal() {
   const [treatRequests, setTreatRequests] = useState([]);
   const [welfare,       setWelfare]       = useState([]);
   const [packages,      setPackages]      = useState([]);
+  const [profilePic,    setProfilePic]    = useState(null);
+  const [unreadReplies, setUnreadReplies] = useState(0);
 
   useEffect(() => { if (user) loadAll(); }, [user]);
 
@@ -892,8 +1141,17 @@ export default function MemberPortal() {
       if (!memberData) { setLoading(false); return; }
       setMember(memberData);
 
+      // Load profile picture from Supabase storage if exists
+      const { data: picData } = supabase.storage
+        .from("profile-pics")
+        .getPublicUrl(`${memberData.id}/avatar.jpg`);
+      if (picData?.publicUrl) {
+        // Add cache buster so updates show immediately
+        setProfilePic(picData.publicUrl + "?t=" + Date.now());
+      }
+
       const mid = memberData.id;
-      const [sv, ln, lnReq, tr, trReq, wf, pk] = await Promise.all([
+      const [sv, ln, lnReq, tr, trReq, wf, pk, unread] = await Promise.all([
         supabase.from("savings").select("*").eq("member_id", mid).order("saving_date",{ascending:false}),
         supabase.from("loans").select("*").eq("members_id", mid).order("issue_date",{ascending:false}),
         supabase.from("loan_requests").select("*").eq("member_id", mid).order("created_at",{ascending:false}),
@@ -901,6 +1159,7 @@ export default function MemberPortal() {
         supabase.from("treat_requests").select("*").eq("member_id", mid).order("created_at",{ascending:false}),
         supabase.from("welfare_contributions").select("*").eq("member_id", mid).order("contribution_month",{ascending:false}),
         supabase.from("saving_packages").select("*"),
+        supabase.from("member_comments").select("id",{count:"exact"}).eq("member_id", mid).eq("is_admin_reply", true).eq("read_by_member", false),
       ]);
 
       setSavings(sv.data         || []);
@@ -910,6 +1169,7 @@ export default function MemberPortal() {
       setTreatRequests(trReq.data|| []);
       setWelfare(wf.data         || []);
       setPackages(pk.data        || []);
+      setUnreadReplies(unread.count || 0);
     } catch (err) {
       console.error("Portal load error:", err);
     } finally {
@@ -917,13 +1177,72 @@ export default function MemberPortal() {
     }
   }
 
+  // ── Reminders ─────────────────────────────────────────────────────────────
+  const reminders = (() => {
+    const now    = new Date();
+    const day    = now.getDate();
+    const month  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+    const prevM  = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    const prevMonth = `${prevM.getFullYear()}-${String(prevM.getMonth()+1).padStart(2,"0")}`;
+    const alerts = [];
+
+    // 1. Savings reminder — on 10th, check if saved last month
+    if (day >= 10) {
+      const savedLastMonth = savings.some(s =>
+        (s.saving_date||s.created_at||"").startsWith(prevMonth) &&
+        s.transaction_type !== "withdrawal"
+      );
+      if (!savedLastMonth) {
+        alerts.push({
+          type:"savings", icon:"💰", color:"#dc2626",
+          msg:`You have not made a savings deposit for ${prevM.toLocaleString("default",{month:"long"})} ${prevM.getFullYear()}. Please deposit soon.`,
+        });
+      }
+    }
+
+    // 2. Welfare reminder — on 10th, check if paid welfare last month
+    if (day >= 10) {
+      const paidWelfareLastMonth = welfare.some(w =>
+        w.contribution_month?.startsWith(prevMonth)
+      );
+      if (!paidWelfareLastMonth) {
+        alerts.push({
+          type:"welfare", icon:"🤝", color:"#ca8a04",
+          msg:`Your welfare fee for ${prevM.toLocaleString("default",{month:"long"})} ${prevM.getFullYear()} has not been paid. Please clear it.`,
+        });
+      }
+    }
+
+    // 3. Loan due date reminder — 10 days before due date
+    const activeLoan = loans.find(l => l.loan_status === "approved");
+    if (activeLoan?.due_date) {
+      const due       = new Date(activeLoan.due_date);
+      const daysLeft  = Math.ceil((due - now) / (1000*60*60*24));
+      if (daysLeft >= 0 && daysLeft <= 10) {
+        alerts.push({
+          type:"loan", icon:"📋", color:"#dc2626",
+          msg:`Your loan of UGX ${new Intl.NumberFormat("en-UG").format(activeLoan.balance||0)} is due in ${daysLeft} day${daysLeft!==1?"s":""} (${activeLoan.due_date}). Please arrange repayment.`,
+        });
+      }
+      if (daysLeft < 0) {
+        alerts.push({
+          type:"loan", icon:"⚠️", color:"#dc2626",
+          msg:`Your loan is OVERDUE by ${Math.abs(daysLeft)} day${Math.abs(daysLeft)!==1?"s":""}. Please contact the office immediately.`,
+        });
+      }
+    }
+
+    return alerts;
+  })();
+
   const tabs = [
-    { key:"home",    icon:"🏠", label:"Home"    },
-    { key:"savings", icon:"💰", label:"Savings" },
-    { key:"loan",    icon:"📋", label:"Loan"    },
-    { key:"treat",   icon:"🏦", label:"Treat"   },
-    { key:"welfare", icon:"🤝", label:"Welfare" },
-    { key:"profile", icon:"👤", label:"Profile" },
+    { key:"home",     icon:"🏠", label:"Home"     },
+    { key:"savings",  icon:"💰", label:"Savings"  },
+    { key:"loan",     icon:"📋", label:"Loan"     },
+    { key:"treat",    icon:"🏦", label:"Treat"    },
+    { key:"welfare",  icon:"🤝", label:"Welfare"  },
+    { key:"contacts", icon:"📞", label:"Contacts", badge: unreadReplies },
+    { key:"profile",  icon:"👤", label:"Profile"  },
   ];
 
   if (loading) {
@@ -1028,9 +1347,21 @@ export default function MemberPortal() {
         {/* ── Top bar */}
         <div className="portal-topbar">
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-            <img src="/logo-stacked.png" alt="PeaceVyn"
-              style={{ height:30, width:"auto", objectFit:"contain", filter:"brightness(0) invert(1)", opacity:0.9 }}
-              onError={e=>e.target.style.display="none"} />
+            {/* Square profile pic / fallback initials */}
+            <div style={{
+              width:42, height:42, borderRadius:9, flexShrink:0,
+              background: profilePic ? "transparent" : "rgba(255,255,255,0.2)",
+              border:"2px solid rgba(255,255,255,0.4)",
+              overflow:"hidden",
+              display:"flex", alignItems:"center", justifyContent:"center",
+            }}>
+              {profilePic
+                ? <img src={profilePic} alt="Profile" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                : <span style={{color:"#fff",fontWeight:800,fontSize:15}}>
+                    {member.full_name?.split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase()}
+                  </span>
+              }
+            </div>
             <div>
               <div style={{ color:"rgba(255,255,255,0.75)", fontSize:11, fontWeight:600, textTransform:"uppercase", letterSpacing:0.5 }}>PeaceVyn Member Portal</div>
               <div style={{ color:"#fff", fontSize:14, fontWeight:700 }}>{member.full_name}</div>
@@ -1053,9 +1384,15 @@ export default function MemberPortal() {
                 key={t.key}
                 onClick={() => setTab(t.key)}
                 className={`sidenav-btn${tab === t.key ? " active" : ""}`}
+                style={{ position:"relative" }}
               >
                 <span className="nav-icon">{t.icon}</span>
-                <span>{t.label}</span>
+                <span style={{flex:1}}>{t.label}</span>
+                {t.badge > 0 && (
+                  <span style={{ background:"#dc2626", color:"#fff", fontSize:10, fontWeight:800, padding:"1px 6px", borderRadius:99 }}>
+                    {t.badge}
+                  </span>
+                )}
               </button>
             ))}
 
@@ -1069,12 +1406,13 @@ export default function MemberPortal() {
 
           {/* ── Tab content */}
           <div className="portal-content">
-            {tab === "home"    && <HomeTab    member={member} savings={savings} loans={loans} treatTx={treatTx} welfare={welfare} packages={packages} />}
-            {tab === "savings" && <SavingsTab member={member} savings={savings} packages={packages} />}
-            {tab === "loan"    && <LoanTab    member={member} loans={loans} loanRequests={loanRequests} onRefresh={loadAll} />}
-            {tab === "treat"   && <TreatTab   member={member} treatTx={treatTx} treatRequests={treatRequests} onRefresh={loadAll} />}
-            {tab === "welfare" && <WelfareTab welfare={welfare} />}
-            {tab === "profile" && <ProfileTab member={member} packages={packages} onSignOut={signOut} />}
+            {tab === "home"     && <HomeTab    member={member} savings={savings} loans={loans} treatTx={treatTx} welfare={welfare} packages={packages} profilePic={profilePic} reminders={reminders} />}
+            {tab === "savings"  && <SavingsTab member={member} savings={savings} packages={packages} />}
+            {tab === "loan"     && <LoanTab    member={member} loans={loans} loanRequests={loanRequests} onRefresh={loadAll} />}
+            {tab === "treat"    && <TreatTab   member={member} treatTx={treatTx} treatRequests={treatRequests} onRefresh={loadAll} />}
+            {tab === "welfare"  && <WelfareTab welfare={welfare} />}
+            {tab === "contacts" && <ContactsTab member={member} onReplyRead={()=>setUnreadReplies(0)} />}
+            {tab === "profile"  && <ProfileTab member={member} packages={packages} profilePic={profilePic} onPicUpdate={setProfilePic} onSignOut={signOut} />}
           </div>
         </div>
 
@@ -1084,10 +1422,17 @@ export default function MemberPortal() {
             <button key={t.key} onClick={() => setTab(t.key)} style={{
               flex:1, display:"flex", flexDirection:"column", alignItems:"center",
               gap:3, padding:"10px 4px 12px", border:"none",
-              background:"none", cursor:"pointer",
+              background:"none", cursor:"pointer", position:"relative",
               borderTop: tab===t.key ? "2.5px solid #800020" : "2.5px solid transparent",
             }}>
-              <span style={{ fontSize:20 }}>{t.icon}</span>
+              <span style={{ fontSize:20, position:"relative" }}>
+                {t.icon}
+                {t.badge > 0 && (
+                  <span style={{ position:"absolute", top:-4, right:-8, background:"#dc2626", color:"#fff", fontSize:9, fontWeight:800, padding:"1px 5px", borderRadius:99, lineHeight:1.3 }}>
+                    {t.badge}
+                  </span>
+                )}
+              </span>
               <span style={{ fontSize:10, fontWeight:700, color:tab===t.key?"#800020":"#aaa", letterSpacing:0.3 }}>
                 {t.label}
               </span>

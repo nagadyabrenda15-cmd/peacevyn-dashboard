@@ -9,11 +9,33 @@ export default function Sidebar() {
   const { user, role, signOut } = useAuth();
   const location = useLocation();
 
+  const [unreadMsgs, setUnreadMsgs] = useState(0);
+
   useEffect(() => {
     loadPending();
-    const interval = setInterval(loadPending, 30000);
+    loadUnreadMessages();
+    const interval = setInterval(() => { loadPending(); loadUnreadMessages(); }, 30000);
     return () => clearInterval(interval);
   }, []);
+  useEffect(() => {
+  loadPending();
+  loadUnreadMessages();
+  const interval = setInterval(() => { loadPending(); loadUnreadMessages(); }, 30000);
+  window.addEventListener("peacevyn:refresh-badges", loadUnreadMessages);
+  return () => {
+    clearInterval(interval);
+    window.removeEventListener("peacevyn:refresh-badges", loadUnreadMessages);
+  };
+}, []);
+
+  async function loadUnreadMessages() {
+    const { count } = await supabase
+      .from("member_comments")
+      .select("id",{count:"exact"})
+      .eq("is_admin_reply", false)
+      .eq("read_by_admin", false);
+    setUnreadMsgs(count || 0);
+  }
 
   async function loadPending() {
     const [ln, dp, tr] = await Promise.all([
@@ -25,21 +47,22 @@ export default function Sidebar() {
   }
 
   const navItems = [
-  { to:"/",         label:"Dashboard",  icon:"📊" },
-  { to:"/members",  label:"Members",    icon:"👥" },
-  { to:"/savings",  label:"Savings",    icon:"💰" },
-  { to:"/loans",    label:"Loans",      icon:"📋" },
-  { to:"/fines",    label:"Fines",      icon:"⚠️" },
-  { to:"/packages", label:"Packages",   icon:"📦" },
-  { to:"/welfare",  label:"Welfare",    icon:"🤝" },
-  { to:"/treat",    label:"The Treat",  icon:"🏦" },
-  { to:"/reports",  label:"Reports",    icon:"📊" },
-  // Admin only
-  ...(role === "admin" ? [
-    { to:"/requests", label:"Requests", icon:"📬", badge: pending },
-    { to:"/users",    label:"Users",    icon:"🔐" },
-  ] : []),
-];
+    { to:"/",         label:"Dashboard",  icon:"📊" },
+    { to:"/members",  label:"Members",    icon:"👥" },
+    { to:"/savings",  label:"Savings",    icon:"💰" },
+    { to:"/loans",    label:"Loans",      icon:"📋" },
+    { to:"/fines",    label:"Fines",      icon:"⚠️" },
+    { to:"/packages", label:"Packages",   icon:"📦" },
+    { to:"/welfare",  label:"Welfare",    icon:"🤝" },
+    { to:"/treat",    label:"The Treat",  icon:"🏦" },
+    { to:"/reports",  label:"Reports",    icon:"📊" },
+    // Admin-only pages
+    ...(role === "admin" ? [
+      { to:"/requests", label:"Requests", icon:"📬", badge: pending },
+      { to:"/messages",  label:"Messages", icon:"💬", badge: unreadMsgs },
+      { to:"/users",     label:"Users",    icon:"🔐" },
+    ] : []),
+  ];
 
   return (
     <div style={{
@@ -105,4 +128,3 @@ export default function Sidebar() {
     </div>
   );
 }
-

@@ -97,6 +97,7 @@ export default function Requests() {
   const [loanReqs,    setLoanReqs]    = useState([]);
   const [depositReqs, setDepositReqs] = useState([]);
   const [treatReqs,   setTreatReqs]   = useState([]);
+  const [pwdResetReqs,setPwdResetReqs]= useState([]);
   const [members,     setMembers]     = useState([]);
   const [packages,    setPackages]    = useState([]);
   const [loading,     setLoading]     = useState(true);
@@ -109,16 +110,18 @@ export default function Requests() {
 
   async function loadAll() {
     setLoading(true);
-    const [ln,dp,tr,mb,pk] = await Promise.all([
+    const [ln,dp,tr,pr,mb,pk] = await Promise.all([
       supabase.from("loan_requests").select("*").order("created_at",{ascending:false}),
       supabase.from("savings_deposits").select("*").order("created_at",{ascending:false}),
       supabase.from("treat_requests").select("*").order("created_at",{ascending:false}),
+      supabase.from("password_reset_requests").select("*").order("created_at",{ascending:false}),
       supabase.from("members").select("id,full_name,member_number,saving_package_id"),
       supabase.from("saving_packages").select("id,package_name"),
     ]);
     setLoanReqs(ln.data    || []);
     setDepositReqs(dp.data || []);
     setTreatReqs(tr.data   || []);
+    setPwdResetReqs(pr.data|| []);
     setMembers(mb.data     || []);
     setPackages(pk.data    || []);
     setLoading(false);
@@ -232,16 +235,35 @@ export default function Requests() {
     loadAll();
   }
 
+  // ── Mark password reset request as resolved (after admin manually sets new password)
+  async function handleResolvePwdReset(req) {
+    setSaving(true);
+    await supabase.from("password_reset_requests").update({ status:"resolved" }).eq("id",req.id);
+    setSaving(false);
+    showToast("Marked as resolved. Don't forget to set their new password in Users.");
+    loadAll();
+  }
+
+  async function handleRejectPwdReset(req) {
+    setSaving(true);
+    await supabase.from("password_reset_requests").update({ status:"rejected" }).eq("id",req.id);
+    setSaving(false);
+    showToast("Password reset request rejected.");
+    loadAll();
+  }
+
   const pendingLoans    = loanReqs.filter(r=>r.status==="pending").length;
   const pendingDeposits = depositReqs.filter(r=>r.status==="pending").length;
   const pendingTreats   = treatReqs.filter(r=>r.status==="pending").length;
-  const totalPending    = pendingLoans + pendingDeposits + pendingTreats;
+  const pendingPwdReset = pwdResetReqs.filter(r=>r.status==="pending").length;
+  const totalPending    = pendingLoans + pendingDeposits + pendingTreats + pendingPwdReset;
 
   const tabDefs = [
-    { key:"loans",    label:"Loans",    count:pendingLoans,    color:"#2563eb" },
-    { key:"deposits", label:"Deposits", count:pendingDeposits, color:"#15803d" },
-    { key:"treat",    label:"Treat",    count:pendingTreats,   color:"#800020" },
-    { key:"history",  label:"History",  count:0,               color:"#6b7280" },
+    { key:"loans",    label:"Loans",          count:pendingLoans,    color:"#2563eb" },
+    { key:"deposits", label:"Deposits",       count:pendingDeposits, color:"#15803d" },
+    { key:"treat",    label:"Treat",          count:pendingTreats,   color:"#800020" },
+    { key:"password", label:"Password Resets",count:pendingPwdReset, color:"#ca8a04" },
+    { key:"history",  label:"History",        count:0,               color:"#6b7280" },
   ];
 
   return (
@@ -348,6 +370,26 @@ export default function Requests() {
             ))
           )}
 
+          {/* PASSWORD RESET REQUESTS */}
+          {activeTab==="password" && (
+            pwdResetReqs.length===0 ? (
+              <Empty label="No password reset requests yet" />
+            ) : pwdResetReqs.map(r=>(
+              <RequestCard
+                key={r.id}
+                icon="🔑" color="#ca8a04"
+                title={`Password Reset — ${r.full_name}`}
+                member={r.member_number} memberNo={r.email}
+                details={[`Contact: ${r.contact}`, `Email: ${r.email}`]}
+                status={r.status} date={r.created_at}
+                onApprove={r.status==="pending" ? ()=>handleResolvePwdReset(r) : null}
+                onReject={r.status==="pending"  ? ()=>handleRejectPwdReset(r) : null}
+                approveLabel="✓ Mark Resolved"
+                saving={saving}
+              />
+            ))
+          )}
+
           {/* HISTORY */}
           {activeTab==="history" && (
             <div style={{background:"#fff",borderRadius:12,overflow:"hidden",boxShadow:"0 2px 12px rgba(0,0,0,0.06)"}}>
@@ -365,6 +407,7 @@ export default function Requests() {
                       ...loanReqs.map(r=>({type:"Loan",member:getMemberName(r.member_id),amount:r.amount_requested,status:r.status,date:r.created_at})),
                       ...depositReqs.map(r=>({type:"Deposit",member:getMemberName(r.member_id),amount:r.amount,status:r.status,date:r.created_at})),
                       ...treatReqs.map(r=>({type:"Treat",member:getMemberName(r.member_id),amount:r.amount,status:r.status,date:r.created_at})),
+                      ...pwdResetReqs.map(r=>({type:"Password Reset",member:r.full_name,amount:0,status:r.status,date:r.created_at})),
                     ].sort((a,b)=>new Date(b.date)-new Date(a.date)).map((r,i)=>(
                       <tr key={i} style={{borderBottom:"1px solid #f3f4f6"}}>
                         <td style={{padding:"9px 12px",color:"#555"}}>{r.type}</td>

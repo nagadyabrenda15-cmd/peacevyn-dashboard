@@ -1,13 +1,10 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-
-// ── Logo as inline SVG-like using the actual uploaded image
-// Place logo-stacked.png in src/assets/ and logo-horizontal.png too
-// We reference them via import at top of your file in your project:
-// import logoStacked from "../assets/logo-stacked.png";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const { signIn } = useAuth();
+  const navigate = useNavigate();
 
   const [email,     setEmail]     = useState("");
   const [password,  setPassword]  = useState("");
@@ -162,7 +159,13 @@ export default function Login() {
 
         {/* ── Footer */}
         <p style={S.footer}>
-          Forgot your password? Contact your administrator to reset it.
+          Forgot your password?{" "}
+          <span
+            onClick={()=>navigate("/forgot-password")}
+            style={{color:"#800020",fontWeight:700,cursor:"pointer",textDecoration:"underline"}}
+          >
+            Request a reset
+          </span>
         </p>
       </div>
     </div>
