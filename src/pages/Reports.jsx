@@ -200,6 +200,7 @@ export default function Reports() {
   const [loansData,     setLoansData]     = useState(null);
   const [finesData,     setFinesData]     = useState(null);
   const [welfareData,   setWelfareData]   = useState(null);
+  const [treatData,     setTreatData]     = useState(null);
   const [membersData,   setMembersData]   = useState(null);
   const [monthlyData,   setMonthlyData]   = useState(null);
 
@@ -361,6 +362,65 @@ export default function Reports() {
     setLoading(false);
   }
 
+  async function loadTreat() {
+    setLoading(true);
+    const [tr, mb] = await Promise.all([
+      supabase.from("treat").select("*").gte("transaction_date", dateFrom).lte("transaction_date", dateTo).order("transaction_date"),
+      supabase.from("members").select("id, full_name, member_number"),
+    ]);
+    const members = mb.data || [];
+    const txs      = tr.data || [];
+
+    // Row per transaction — subscription rows excluded from member-facing financial rows
+    // but counted separately in the summary (committee fund), per the rule that the
+    // subscription fee is not part of a member's treat balance.
+    const rows = txs
+      .filter(t => t.transaction_type !== "subscription")
+      .map(t => {
+        const m = members.find(m => m.id === t.member_id);
+        return [
+          m?.member_number || "—",
+          m?.full_name     || "—",
+          t.account_number || "—",
+          t.transaction_type || "—",
+          `UGX ${fmt(t.amount)}`,
+          `UGX ${fmt(t.balance_after)}`,
+          t.payment_method || "—",
+          t.transaction_date || "—",
+          t.notes || "—",
+        ];
+      });
+
+    const deposits      = txs.filter(t=>t.transaction_type==="deposit").reduce((a,t)=>a+Number(t.amount),0);
+    const withdrawals   = txs.filter(t=>t.transaction_type==="withdrawal").reduce((a,t)=>a+Number(t.amount),0);
+    const subscriptions = txs.filter(t=>t.transaction_type==="subscription");
+    const subRevenue    = subscriptions.reduce((a,t)=>a+Number(t.amount),0);
+    const subscribedIds = new Set(subscriptions.map(t=>t.member_id));
+
+    // Current fund balance — latest non-subscription balance per enrolled member
+    const enrolledIds = new Set(txs.filter(t=>t.transaction_type!=="subscription").map(t=>t.member_id));
+    let totalFund = 0;
+    enrolledIds.forEach(mid => {
+      const memberTx = txs
+        .filter(t => t.member_id === mid && t.transaction_type !== "subscription")
+        .sort((a,b) => new Date(b.transaction_date) - new Date(a.transaction_date));
+      if (memberTx.length > 0) totalFund += Number(memberTx[0].balance_after || 0);
+    });
+
+    setTreatData({
+      rows,
+      summary: [
+        { label: "Total Treat Fund",        value: `UGX ${fmt(totalFund)}` },
+        { label: "Subscribed Members",      value: subscribedIds.size },
+        { label: "Subscription Revenue",    value: `UGX ${fmt(subRevenue)} (committee)` },
+        { label: "Total Deposited",         value: `UGX ${fmt(deposits)}` },
+        { label: "Total Withdrawn",         value: `UGX ${fmt(withdrawals)}` },
+      ],
+    });
+    setActive("treat");
+    setLoading(false);
+  }
+
   async function loadMembers() {
     setLoading(true);
     const [mb, pk] = await Promise.all([
@@ -404,16 +464,18 @@ export default function Reports() {
 
   async function loadMonthly() {
     setLoading(true);
-    const [sv, ln, fn, wf] = await Promise.all([
+    const [sv, ln, fn, wf, tr] = await Promise.all([
       supabase.from("savings").select("amount, transaction_type, saving_date").gte("saving_date", dateFrom).lte("saving_date", dateTo),
       supabase.from("loans").select("loan_amount, amount_paid, balance, loan_status, issue_date").gte("issue_date", dateFrom).lte("issue_date", dateTo),
       supabase.from("fines").select("amount, fine_status, issued_date").gte("issued_date", dateFrom).lte("issued_date", dateTo),
       supabase.from("welfare_contributions").select("amount"),
+      supabase.from("treat").select("amount, transaction_type, transaction_date").gte("transaction_date", dateFrom).lte("transaction_date", dateTo),
     ]);
 
     const savings     = sv.data || [];
     const loans       = ln.data || [];
     const fines       = fn.data || [];
+    const treat       = tr.data || [];
 
     const totalSavings    = savings.filter(s=>s.transaction_type!=="withdrawal").reduce((a,s)=>a+Number(s.amount),0);
     const totalWithdrawals= savings.filter(s=>s.transaction_type==="withdrawal").reduce((a,s)=>a+Number(s.amount),0);
@@ -422,6 +484,9 @@ export default function Reports() {
     const totalFines      = fines.reduce((a,f)=>a+Number(f.amount),0);
     const finesCollected  = fines.filter(f=>f.fine_status==="paid").reduce((a,f)=>a+Number(f.amount),0);
     const totalWelfare    = (wf.data||[]).reduce((a,w)=>a+Number(w.amount||0),0);
+    const treatDeposits   = treat.filter(t=>t.transaction_type==="deposit").reduce((a,t)=>a+Number(t.amount),0);
+    const treatWithdrawn  = treat.filter(t=>t.transaction_type==="withdrawal").reduce((a,t)=>a+Number(t.amount),0);
+    const treatSubRevenue = treat.filter(t=>t.transaction_type==="subscription").reduce((a,t)=>a+Number(t.amount),0);
 
     const rows = [
       ["💰 Savings Deposits",    savings.filter(s=>s.transaction_type!=="withdrawal").length, `UGX ${fmt(totalSavings)}`, ""],
@@ -429,6 +494,9 @@ export default function Reports() {
       ["📋 Loans Issued",        loans.length,  `UGX ${fmt(totalLoans)}`,     `UGX ${fmt(loansCollected)} collected`],
       ["⚠️ Fines Issued",        fines.length,  `UGX ${fmt(totalFines)}`,     `UGX ${fmt(finesCollected)} collected`],
       ["🤝 Welfare Fund",        (wf.data||[]).length, `UGX ${fmt(totalWelfare)}`, "Total all-time fund"],
+      ["🏦 Treat Deposits",      treat.filter(t=>t.transaction_type==="deposit").length, `UGX ${fmt(treatDeposits)}`, ""],
+      ["🏦 Treat Withdrawals",   treat.filter(t=>t.transaction_type==="withdrawal").length, `UGX ${fmt(treatWithdrawn)}`, ""],
+      ["🔑 Treat Subscriptions", treat.filter(t=>t.transaction_type==="subscription").length, `UGX ${fmt(treatSubRevenue)}`, "Committee fund"],
     ];
 
     setMonthlyData({
@@ -438,6 +506,7 @@ export default function Reports() {
         { label: "Net Savings", value: `UGX ${fmt(totalSavings - totalWithdrawals)}` },
         { label: "Loans Outstanding", value: `UGX ${fmt(loans.reduce((a,l)=>a+Number(l.balance||0),0))}` },
         { label: "Fines Pending", value: `UGX ${fmt(fines.filter(f=>f.fine_status==="unpaid").reduce((a,f)=>a+Number(f.amount),0))}` },
+        { label: "Treat Net (Dep − With)", value: `UGX ${fmt(treatDeposits - treatWithdrawn)}` },
       ],
     });
     setActive("monthly");
@@ -481,6 +550,15 @@ export default function Reports() {
       data: welfareData,
       onGenerate: loadWelfare,
       filename: "peacevyn_welfare_report.csv",
+    },
+    {
+      key: "treat",
+      icon: "🏦", title: "Emergency Treat Report", color: "#15803d",
+      description: "Treat deposits, withdrawals and committee subscription revenue by date range",
+      headers: ["Mem No.","Member","Account","Type","Amount","Balance After","Method","Date","Notes"],
+      data: treatData,
+      onGenerate: loadTreat,
+      filename: "peacevyn_treat_report.csv",
     },
     {
       key: "members",
