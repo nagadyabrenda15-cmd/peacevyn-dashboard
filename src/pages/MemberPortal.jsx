@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
+import {
+  Home, Wallet, ClipboardList, Landmark, HandHeart, Phone, User,
+  LogOut, Building2, MessageCircle, Siren, Printer, MessageSquare,
+  PiggyBank, AlertTriangle, Lock, ArrowDownToLine, ArrowUpFromLine,
+  KeyRound, Camera, Eye, EyeOff, Send, Check, CheckCircle2, XCircle,
+  Mail, PhoneCall, Package, Loader2,
+} from "lucide-react";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmt   = (n) => new Intl.NumberFormat("en-UG").format(Math.round(Number(n) || 0));
@@ -52,60 +59,19 @@ const inp = {
 };
 const sel = { ...inp, cursor: "pointer" };
 
-// ─── Balance Card ─────────────────────────────────────────────────────────────
-function BalanceCard({ label, amount, icon, color, sub, locked }) {
-  return (
-    <div style={{
-      background: locked ? "#f3f4f6" : `linear-gradient(135deg, ${color}, ${color}cc)`,
-      borderRadius: 14, padding: "16px 18px",
-      display: "flex", justifyContent: "space-between", alignItems: "center",
-      opacity: locked ? 0.7 : 1,
-    }}>
-      <div>
-        <div style={{ fontSize: 12, color: locked ? "#888" : "rgba(255,255,255,0.8)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>
-          {label}
-        </div>
-        <div style={{ fontSize: 22, fontWeight: 800, color: locked ? "#555" : "#fff", fontFamily: "Georgia, serif", marginTop: 4 }}>
-          {locked ? "🔒 Subscribe" : `UGX ${fmt(amount)}`}
-        </div>
-        {sub && <div style={{ fontSize: 11, color: locked ? "#aaa" : "rgba(255,255,255,0.7)", marginTop: 3 }}>{sub}</div>}
-      </div>
-      <div style={{ fontSize: 32, opacity: 0.3 }}>{icon}</div>
-    </div>
-  );
-}
-
-// ─── Quick Action Button ──────────────────────────────────────────────────────
-function QuickAction({ icon, label, onClick, color = "#800020", disabled }) {
-  return (
-    <button onClick={onClick} disabled={disabled} style={{
-      display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-      background: "#fff", border: "1.5px solid #f0e8ea", borderRadius: 12,
-      padding: "14px 10px", cursor: disabled ? "not-allowed" : "pointer",
-      flex: 1, opacity: disabled ? 0.5 : 1,
-    }}>
-      <div style={{
-        width: 42, height: 42, borderRadius: 10,
-        background: `${color}18`,
-        display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20,
-      }}>{icon}</div>
-      <span style={{ fontSize: 11, fontWeight: 700, color: "#555", textAlign: "center" }}>{label}</span>
-    </button>
-  );
-}
-
 // ─── Toast ────────────────────────────────────────────────────────────────────
 function Toast({ toast }) {
   if (!toast) return null;
+  const ToastIcon = toast.type === "error" ? XCircle : CheckCircle2;
   return (
     <div style={{
       position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)",
       zIndex: 9999, background: toast.type === "error" ? "#dc2626" : "#15803d",
       color: "#fff", padding: "12px 24px", borderRadius: 10,
       fontWeight: 600, fontSize: 14, boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-      whiteSpace: "nowrap",
+      whiteSpace: "nowrap", display:"flex", alignItems:"center", gap:8,
     }}>
-      {toast.type === "error" ? "⚠ " : "✓ "}{toast.msg}
+      <ToastIcon size={16}/>{toast.msg}
     </div>
   );
 }
@@ -150,7 +116,7 @@ function HomeTab({ member, savings, loans, treatTx, welfare, packages, profilePi
   const pkg            = packages.find(p => p.id === member?.saving_package_id);
 
   // Shared card shell — same shape/design as the reminder card
-  function InfoCard({ icon, label, value, sub, color, filled }) {
+  function InfoCard({ Icon, label, value, sub, color, filled }) {
     return (
       <div style={{
         background: filled ? color : "#fff",
@@ -159,7 +125,9 @@ function HomeTab({ member, savings, loans, treatTx, welfare, packages, profilePi
         borderLeft: `4px solid ${filled ? "rgba(255,255,255,0.5)" : color}`,
         display:"flex", gap:12, alignItems:"flex-start",
       }}>
-        <span style={{fontSize:22,flexShrink:0,marginTop:1}}>{icon}</span>
+        <div style={{flexShrink:0,marginTop:1,color: filled ? "#fff" : color}}>
+          <Icon size={22}/>
+        </div>
         <div style={{flex:1,minWidth:0}}>
           <div style={{
             fontSize:11, fontWeight:800,
@@ -170,6 +138,7 @@ function HomeTab({ member, savings, loans, treatTx, welfare, packages, profilePi
             fontSize:17, fontWeight:800,
             color: filled ? "#fff" : "#111",
             fontFamily:"Georgia, serif", lineHeight:1.2,
+            display:"flex", alignItems:"center", gap:6,
           }}>{value}</div>
           {sub && (
             <div style={{
@@ -194,7 +163,7 @@ function HomeTab({ member, savings, loans, treatTx, welfare, packages, profilePi
         <div style={{flex:1,minWidth:0}}>
           <div style={{color:"rgba(255,255,255,0.75)",fontSize:12}}>Welcome back,</div>
           <div style={{color:"#fff",fontSize:19,fontWeight:800,fontFamily:"Georgia, serif",lineHeight:1.2,marginTop:1}}>
-            {member?.full_name?.split(" ")[0]} 👋
+            {member?.full_name?.split(" ")[0]}
           </div>
           <div style={{color:"rgba(255,255,255,0.65)",fontSize:12,marginTop:3}}>
             {member?.member_number} · {pkg?.package_name || "—"}
@@ -211,7 +180,7 @@ function HomeTab({ member, savings, loans, treatTx, welfare, packages, profilePi
         <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:10}}>
           {reminders.map((r,i)=>(
             <InfoCard key={i}
-              icon={r.icon} label="Reminder" value={r.msg.split(".")[0]+"."}
+              Icon={r.Icon} label="Reminder" value={r.msg.split(".")[0]+"."}
               sub={r.msg.split(".").slice(1).join(".").trim() || null}
               color={r.color} filled
             />
@@ -222,23 +191,23 @@ function HomeTab({ member, savings, loans, treatTx, welfare, packages, profilePi
       {/* ── Info cards — compact natural height on mobile, 2-col grid on tablet/desktop */}
       <div className="home-cards-grid">
         <InfoCard
-          icon="💰" label="Savings Balance" value={`UGX ${fmt(savingsBalance)}`}
+          Icon={Wallet} label="Savings Balance" value={`UGX ${fmt(savingsBalance)}`}
           sub={lastSavingsTx ? `Last: ${lastSavingsTx.saving_date||lastSavingsTx.created_at?.split("T")[0]||"—"}` : "No transactions yet"}
           color="#800020"
         />
         <InfoCard
-          icon="📋" label="Active Loan" value={activeLoan?`UGX ${fmt(loanBalance)}`:"No active loan"}
+          Icon={ClipboardList} label="Active Loan" value={activeLoan?`UGX ${fmt(loanBalance)}`:"No active loan"}
           sub={activeLoan ? `Due: ${activeLoan.due_date||"—"}` : "Visit the Loan tab to request one"}
           color="#2563eb"
         />
         <InfoCard
-          icon="🏦" label="Treat Account" value={isEnrolled?`UGX ${fmt(treatBalance)}`:"🔒 Not subscribed"}
+          Icon={isEnrolled ? Landmark : Lock} label="Treat Account" value={isEnrolled?`UGX ${fmt(treatBalance)}`:"Not subscribed"}
           sub={isEnrolled ? (lastTreatTx?`Last: ${lastTreatTx.transaction_date||"—"}`:"No deposits yet") : "UGX 5,000 to activate"}
           color="#15803d"
         />
         <InfoCard
-          icon="🤝" label={`Welfare — ${now.toLocaleString("default",{month:"long"})} ${now.getFullYear()}`}
-          value={paidThisMonth?"✓ Cleared":"✗ Not Cleared"}
+          Icon={paidThisMonth ? CheckCircle2 : XCircle} label={`Welfare — ${now.toLocaleString("default",{month:"long"})} ${now.getFullYear()}`}
+          value={paidThisMonth?"Cleared":"Not Cleared"}
           sub={paidThisMonth ? "Thank you for contributing this month" : "Please pay your welfare fee this month"}
           color={paidThisMonth?"#15803d":"#dc2626"}
         />
@@ -291,7 +260,7 @@ function SavingsTab({ member, savings, packages }) {
       <div style={{ fontSize:13,fontWeight:700,color:"#555",marginBottom:10 }}>Transaction History</div>
       {savings.length === 0 ? (
         <div style={{ textAlign:"center",padding:"32px 0",color:"#aaa" }}>
-          <div style={{ fontSize:36,marginBottom:8 }}>💰</div>
+          <Wallet size={36} style={{marginBottom:8,opacity:0.5}}/>
           <p style={{ margin:0 }}>No savings transactions yet.</p>
         </div>
       ) : (
@@ -387,7 +356,7 @@ function LoanTab({ member, loans, loanRequests, onRefresh }) {
         </div>
       ) : (
         <div style={{ background:"#f9fafb",borderRadius:16,padding:"20px",textAlign:"center",marginBottom:16,border:"1px dashed #e5e7eb" }}>
-          <div style={{fontSize:36,marginBottom:8}}>📋</div>
+          <ClipboardList size={36} style={{marginBottom:8,opacity:0.4,color:"#888"}}/>
           <div style={{fontSize:15,fontWeight:600,color:"#555"}}>No active loan</div>
           <div style={{fontSize:12,color:"#aaa",marginTop:4}}>Request a loan below</div>
         </div>
@@ -524,7 +493,7 @@ function TreatTab({ member, treatTx, treatRequests, onRefresh }) {
   if (!isEnrolled) {
     return (
       <div style={{ textAlign:"center", padding:"40px 20px" }}>
-        <div style={{ fontSize:56, marginBottom:16 }}>🔒</div>
+        <Lock size={48} style={{marginBottom:16,color:"#800020",opacity:0.7}}/>
         <h3 style={{ margin:"0 0 8px", fontSize:18, fontWeight:800, color:"#111", fontFamily:"Georgia, serif" }}>
           The Treat Account
         </h3>
@@ -534,10 +503,10 @@ function TreatTab({ member, treatTx, treatRequests, onRefresh }) {
         </p>
         <div style={{ background:"#fff5f7",borderRadius:12,padding:"16px",border:"1px solid #f9e0e4",marginBottom:20,textAlign:"left" }}>
           <div style={{ fontSize:13,fontWeight:700,color:"#800020",marginBottom:8 }}>To activate your account:</div>
-          <div style={{ fontSize:13,color:"#555",display:"flex",flexDirection:"column",gap:6 }}>
-            <span>✓ Pay a one-time annual subscription of <strong>UGX 5,000</strong></span>
-            <span>✓ Contact the admin or treasurer to enrol</span>
-            <span>✓ Your account will be activated immediately</span>
+          <div style={{ fontSize:13,color:"#555",display:"flex",flexDirection:"column",gap:8 }}>
+            <span style={{display:"flex",alignItems:"flex-start",gap:8}}><Check size={16} color="#15803d" style={{flexShrink:0,marginTop:2}}/>Pay a one-time annual subscription of <strong>UGX 5,000</strong></span>
+            <span style={{display:"flex",alignItems:"flex-start",gap:8}}><Check size={16} color="#15803d" style={{flexShrink:0,marginTop:2}}/>Contact the admin or treasurer to enrol</span>
+            <span style={{display:"flex",alignItems:"flex-start",gap:8}}><Check size={16} color="#15803d" style={{flexShrink:0,marginTop:2}}/>Your account will be activated immediately</span>
           </div>
         </div>
         <div style={{ background:"#f3f4f6",borderRadius:10,padding:"12px",fontSize:12,color:"#888" }}>
@@ -586,7 +555,8 @@ function TreatTab({ member, treatTx, treatRequests, onRefresh }) {
         color:balance<=0?"#aaa":"#fff",border:"none",
         borderRadius:12,padding:"14px",fontWeight:700,
         cursor:balance<=0?"not-allowed":"pointer",fontSize:15,marginBottom:20,
-      }}>📤 Request Withdrawal</button>
+        display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+      }}><ArrowUpFromLine size={16}/> Request Withdrawal</button>
 
       {/* Transaction history */}
       <div style={{fontSize:13,fontWeight:700,color:"#555",marginBottom:10}}>Transaction History</div>
@@ -594,11 +564,13 @@ function TreatTab({ member, treatTx, treatRequests, onRefresh }) {
         <div style={{textAlign:"center",padding:"24px 0",color:"#aaa",fontSize:13}}>No transactions yet.</div>
       ) : (
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {treatTx.map((t,i)=>(
+          {treatTx.map((t,i)=>{
+            const TxIcon = t.transaction_type==="withdrawal" ? ArrowUpFromLine : t.transaction_type==="subscription" ? KeyRound : ArrowDownToLine;
+            return (
             <div key={i} style={{background:"#fff",borderRadius:10,padding:"12px 14px",border:"1px solid #f3f4f6",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div>
                 <div style={{fontSize:13,fontWeight:700,color:"#111",textTransform:"capitalize",display:"flex",alignItems:"center",gap:6}}>
-                  {t.transaction_type==="withdrawal"?"📤":t.transaction_type==="subscription"?"🔑":"📥"} {t.transaction_type}
+                  <TxIcon size={14} color={t.transaction_type==="withdrawal"?"#dc2626":"#15803d"}/> {t.transaction_type}
                 </div>
                 <div style={{fontSize:11,color:"#aaa",marginTop:2}}>{t.transaction_date} · Bal: UGX {fmt(t.balance_after)}</div>
               </div>
@@ -606,7 +578,8 @@ function TreatTab({ member, treatTx, treatRequests, onRefresh }) {
                 {t.transaction_type==="withdrawal"?"−":"+"}UGX {fmt(t.amount)}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -682,8 +655,9 @@ function WelfareTab({ welfare }) {
           <div style={{color:"rgba(255,255,255,0.75)",fontSize:12,fontWeight:600,textTransform:"uppercase"}}>
             {MONTHS[now.getMonth()]} {now.getFullYear()}
           </div>
-          <div style={{color:"#fff",fontSize:26,fontWeight:800,fontFamily:"Georgia, serif",marginTop:4}}>
-            {paidThisMonth ? "✓ Cleared" : "✗ Not Cleared"}
+          <div style={{color:"#fff",fontSize:26,fontWeight:800,fontFamily:"Georgia, serif",marginTop:4,display:"flex",alignItems:"center",gap:8}}>
+            {paidThisMonth ? <CheckCircle2 size={24}/> : <XCircle size={24}/>}
+            {paidThisMonth ? "Cleared" : "Not Cleared"}
           </div>
           <div style={{color:"rgba(255,255,255,0.75)",fontSize:12,marginTop:6}}>
             {paidThisMonth
@@ -691,7 +665,7 @@ function WelfareTab({ welfare }) {
               : "Welfare not yet paid for this month"}
           </div>
         </div>
-        <div style={{fontSize:40,opacity:0.25}}>🤝</div>
+        <HandHeart size={36} style={{opacity:0.3,color:"#fff"}}/>
       </div>
 
       {/* Summary */}
@@ -735,7 +709,8 @@ function WelfareTab({ welfare }) {
                 background:m.paid?"#dcfce7":"#fee2e2",
                 color:m.paid?"#15803d":"#dc2626",
                 fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:99,whiteSpace:"nowrap",
-              }}>{m.paid?"✓ Cleared":"✗ Not Cleared"}</span>
+                display:"flex",alignItems:"center",gap:4,
+              }}>{m.paid ? <Check size={12}/> : <XCircle size={12}/>}{m.paid?"Cleared":"Not Cleared"}</span>
             </div>
           </div>
         ))}
@@ -749,7 +724,7 @@ function WelfareTab({ welfare }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 const DEPT_CONTACTS = [
   {
-    label:"PeaceVyn Investments", color:"#800020", icon:"🏢",
+    label:"PeaceVyn Investments", color:"#800020", Icon:Building2,
     entries:[
       { name:"Main Line",      number:"+256 700 000 001", type:"call"     },
       { name:"WhatsApp",       number:"+256 700 000 002", type:"whatsapp" },
@@ -757,21 +732,21 @@ const DEPT_CONTACTS = [
     ],
   },
   {
-    label:"Flair Foods Contacts", color:"#ca8a04", icon:"🍽️",
+    label:"Flair Foods Contacts", color:"#ca8a04", Icon:MessageCircle,
     entries:[
       { name:"Flair Foods WhatsApp", number:"+256 700 000 007", type:"whatsapp" },
       { name:"Flair Foods Calls",    number:"+256 700 000 008", type:"call"     },
     ],
   },
   {
-    label:"Emergency Committee", color:"#7e22ce", icon:"🚨",
+    label:"Emergency Committee", color:"#7e22ce", Icon:Siren,
     entries:[
       { name:"EC WhatsApp",   number:"+256 700 000 005", type:"whatsapp" },
       { name:"EC Calls Only", number:"+256 700 000 006", type:"call"     },
     ],
   },
   {
-    label:"Peace Printery Services", color:"#2563eb", icon:"🖨️",
+    label:"Peace Printery Services", color:"#2563eb", Icon:Printer,
     entries:[
       { name:"Calls",    number:"+256 700 000 009", type:"call"     },
       { name:"WhatsApp", number:"+256 700 000 009", type:"whatsapp" },
@@ -779,10 +754,10 @@ const DEPT_CONTACTS = [
   },
 ];
 
-function typeIcon(type) {
-  if (type==="whatsapp") return "💬";
-  if (type==="email")    return "📧";
-  return "📞";
+function TypeIcon({ type, size=18 }) {
+  if (type==="whatsapp") return <MessageSquare size={size}/>;
+  if (type==="email")    return <Mail size={size}/>;
+  return <PhoneCall size={size}/>;
 }
 
 function typeLabel(type) {
@@ -863,7 +838,7 @@ function ContactsTab({ member, onReplyRead }) {
       {DEPT_CONTACTS.map((dept,di)=>(
         <div key={di} style={{background:"#fff",borderRadius:14,boxShadow:"0 2px 10px rgba(0,0,0,0.06)",overflow:"hidden",marginBottom:14,border:`1px solid ${dept.color}20`}}>
           <div style={{background:`linear-gradient(135deg,${dept.color},${dept.color}cc)`,padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}>
-            <span style={{fontSize:22}}>{dept.icon}</span>
+            <dept.Icon size={20} color="#fff" />
             <span style={{color:"#fff",fontWeight:800,fontSize:15,fontFamily:"Georgia, serif"}}>{dept.label}</span>
           </div>
           <div style={{padding:"6px 0"}}>
@@ -873,8 +848,8 @@ function ContactsTab({ member, onReplyRead }) {
                 padding:"12px 16px",border:"none",background:"#fff",cursor:"pointer",
                 borderBottom: ei<dept.entries.length-1?"1px solid #f3f4f6":"none",
               }}>
-                <div style={{width:40,height:40,borderRadius:10,flexShrink:0,background:`${dept.color}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>
-                  {typeIcon(e.type)}
+                <div style={{width:40,height:40,borderRadius:10,flexShrink:0,background:`${dept.color}15`,display:"flex",alignItems:"center",justifyContent:"center",color:dept.color}}>
+                  <TypeIcon type={e.type} size={18}/>
                 </div>
                 <div style={{flex:1,textAlign:"left"}}>
                   <div style={{fontSize:14,fontWeight:700,color:"#111"}}>{e.name}</div>
@@ -891,7 +866,9 @@ function ContactsTab({ member, onReplyRead }) {
 
       {/* Private message thread with PeaceVyn */}
       <div style={{marginTop:8}}>
-        <h3 style={{fontSize:15,fontWeight:800,color:"#111",margin:"0 0 6px",fontFamily:"Georgia, serif"}}>💬 Message PeaceVyn</h3>
+        <h3 style={{fontSize:15,fontWeight:800,color:"#111",margin:"0 0 6px",fontFamily:"Georgia, serif",display:"flex",alignItems:"center",gap:8}}>
+          <MessageCircle size={18} color="#800020"/> Message PeaceVyn
+        </h3>
         <p style={{fontSize:12,color:"#888",margin:"0 0 14px"}}>This is a private thread between you and the PeaceVyn team.</p>
 
         {/* Thread */}
@@ -900,7 +877,7 @@ function ContactsTab({ member, onReplyRead }) {
             <div style={{textAlign:"center",padding:"20px 0",color:"#aaa",fontSize:13}}>Loading…</div>
           ) : messages.length===0 ? (
             <div style={{textAlign:"center",padding:"24px 0",color:"#aaa"}}>
-              <div style={{fontSize:32,marginBottom:8}}>💬</div>
+              <MessageCircle size={32} style={{marginBottom:8,opacity:0.4}}/>
               <p style={{margin:0,fontSize:13}}>No messages yet. Say hello!</p>
             </div>
           ) : (
@@ -974,7 +951,7 @@ function ProfileTab({ member, packages, profilePic, onPicUpdate, onSignOut }) {
     const { error } = await supabase.auth.updateUser({ password: pwdForm.newPwd });
     setPwdLoading(false);
     if (error) { setPwdError(error.message); return; }
-    setPwdSuccess("✓ Password changed!");
+    setPwdSuccess("Password changed successfully!");
     setPwdForm({ newPwd:"", confirm:"" });
     setTimeout(() => { setShowChangePwd(false); setPwdSuccess(""); }, 2000);
   }
@@ -1032,15 +1009,17 @@ function ProfileTab({ member, packages, profilePic, onPicUpdate, onSignOut }) {
             }
           </div>
           {/* Camera overlay */}
-          <div style={{ position:"absolute",bottom:0,right:0,width:26,height:26,background:"#fff",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 6px rgba(0,0,0,0.2)",fontSize:14 }}>
-            {picLoading ? "⏳" : "📷"}
+          <div style={{ position:"absolute",bottom:0,right:0,width:26,height:26,background:"#fff",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 6px rgba(0,0,0,0.2)" }}>
+            {picLoading ? <Loader2 size={13} color="#800020" className="spin-icon"/> : <Camera size={13} color="#800020"/>}
           </div>
           <input type="file" accept="image/*" onChange={handlePicUpload}
             style={{ display:"none" }} disabled={picLoading} />
         </label>
 
         {picError && <div style={{fontSize:11,color:"#fca5a5",marginBottom:6}}>{picError}</div>}
-        <div style={{fontSize:11,color:"rgba(255,255,255,0.6)",marginBottom:8}}>Tap 📷 to change photo</div>
+        <div style={{fontSize:11,color:"rgba(255,255,255,0.6)",marginBottom:8,display:"flex",alignItems:"center",gap:4}}>
+          <Camera size={11}/> Tap to change photo
+        </div>
 
         <div style={{ color:"#fff",fontSize:20,fontWeight:800,fontFamily:"Georgia, serif" }}>{member?.full_name}</div>
         <div style={{ color:"rgba(255,255,255,0.75)",fontSize:13,marginTop:4 }}>{member?.member_number}</div>
@@ -1048,14 +1027,18 @@ function ProfileTab({ member, packages, profilePic, onPicUpdate, onSignOut }) {
           <span style={{ background:"rgba(255,255,255,0.2)",color:"#fff",fontSize:11,fontWeight:700,padding:"4px 12px",borderRadius:99,textTransform:"capitalize" }}>
             {member?.member_status}
           </span>
-          {pkg && <span style={{ background:"rgba(255,255,255,0.15)",color:"#fff",fontSize:11,fontWeight:600,padding:"4px 12px",borderRadius:99 }}>📦 {pkg.package_name}</span>}
+          {pkg && (
+            <span style={{ background:"rgba(255,255,255,0.15)",color:"#fff",fontSize:11,fontWeight:600,padding:"4px 12px",borderRadius:99,display:"flex",alignItems:"center",gap:4 }}>
+              <Package size={12}/> {pkg.package_name}
+            </span>
+          )}
         </div>
       </div>
 
       {/* Change Password */}
       <div style={{ marginBottom:16 }}>
         <button onClick={()=>setShowChangePwd(s=>!s)} style={{ width:"100%",background:showChangePwd?"#fff5f7":"#fff",color:"#800020",border:"2px solid #800020",borderRadius:12,padding:"12px",fontWeight:700,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8 }}>
-          🔑 {showChangePwd?"Cancel":"Change Password"}
+          <KeyRound size={16}/> {showChangePwd?"Cancel":"Change Password"}
         </button>
 
         {showChangePwd && (
@@ -1066,8 +1049,8 @@ function ProfileTab({ member, packages, profilePic, onPicUpdate, onSignOut }) {
                 <input type={showNew?"text":"password"} placeholder="Min 6 characters" value={pwdForm.newPwd}
                   onChange={e=>setPwdForm(f=>({...f,newPwd:e.target.value}))}
                   style={{ padding:"10px 40px 10px 12px",border:"1.5px solid #e5e7eb",borderRadius:8,fontSize:14,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"sans-serif" }}/>
-                <button onClick={()=>setShowNew(s=>!s)} style={{ position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:15,color:"#888",padding:0 }}>
-                  {showNew?"🙈":"👁"}
+                <button onClick={()=>setShowNew(s=>!s)} style={{ position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:"#888",padding:0,display:"flex" }}>
+                  {showNew ? <EyeOff size={16}/> : <Eye size={16}/>}
                 </button>
               </div>
             </div>
@@ -1077,8 +1060,8 @@ function ProfileTab({ member, packages, profilePic, onPicUpdate, onSignOut }) {
                 onChange={e=>setPwdForm(f=>({...f,confirm:e.target.value}))}
                 style={{ padding:"10px 12px",border:"1.5px solid #e5e7eb",borderRadius:8,fontSize:14,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"sans-serif" }}/>
             </div>
-            {pwdError   && <div style={{ fontSize:12,color:"#dc2626",background:"#fff5f5",borderRadius:7,padding:"8px 10px" }}>⚠ {pwdError}</div>}
-            {pwdSuccess  && <div style={{ fontSize:12,color:"#15803d",background:"#f0fdf4",borderRadius:7,padding:"8px 10px" }}>{pwdSuccess}</div>}
+            {pwdError   && <div style={{ fontSize:12,color:"#dc2626",background:"#fff5f5",borderRadius:7,padding:"8px 10px",display:"flex",alignItems:"center",gap:6 }}><AlertTriangle size={14}/>{pwdError}</div>}
+            {pwdSuccess  && <div style={{ fontSize:12,color:"#15803d",background:"#f0fdf4",borderRadius:7,padding:"8px 10px",display:"flex",alignItems:"center",gap:6 }}><CheckCircle2 size={14}/>{pwdSuccess}</div>}
             <button onClick={handleChangePassword} disabled={pwdLoading} style={{ background:pwdLoading?"#c0606f":"#800020",color:"#fff",border:"none",borderRadius:9,padding:"11px",fontWeight:700,cursor:pwdLoading?"not-allowed":"pointer",fontSize:14 }}>
               {pwdLoading?"Updating…":"Update Password"}
             </button>
@@ -1097,8 +1080,8 @@ function ProfileTab({ member, packages, profilePic, onPicUpdate, onSignOut }) {
         ))}
       </div>
 
-      <button onClick={onSignOut} style={{ width:"100%",background:"#fff",color:"#800020",border:"2px solid #800020",borderRadius:12,padding:"13px",fontWeight:700,cursor:"pointer",fontSize:15 }}>
-        🚪 Sign Out
+      <button onClick={onSignOut} style={{ width:"100%",background:"#fff",color:"#800020",border:"2px solid #800020",borderRadius:12,padding:"13px",fontWeight:700,cursor:"pointer",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",gap:8 }}>
+        <LogOut size={16}/> Sign Out
       </button>
     </div>
   );
@@ -1194,7 +1177,7 @@ export default function MemberPortal() {
       );
       if (!savedLastMonth) {
         alerts.push({
-          type:"savings", icon:"💰", color:"#dc2626",
+          type:"savings", Icon:Wallet, color:"#dc2626",
           msg:`You have not made a savings deposit for ${prevM.toLocaleString("default",{month:"long"})} ${prevM.getFullYear()}. Please deposit soon.`,
         });
       }
@@ -1207,7 +1190,7 @@ export default function MemberPortal() {
       );
       if (!paidWelfareLastMonth) {
         alerts.push({
-          type:"welfare", icon:"🤝", color:"#ca8a04",
+          type:"welfare", Icon:HandHeart, color:"#ca8a04",
           msg:`Your welfare fee for ${prevM.toLocaleString("default",{month:"long"})} ${prevM.getFullYear()} has not been paid. Please clear it.`,
         });
       }
@@ -1220,13 +1203,13 @@ export default function MemberPortal() {
       const daysLeft  = Math.ceil((due - now) / (1000*60*60*24));
       if (daysLeft >= 0 && daysLeft <= 10) {
         alerts.push({
-          type:"loan", icon:"📋", color:"#dc2626",
+          type:"loan", Icon:ClipboardList, color:"#dc2626",
           msg:`Your loan of UGX ${new Intl.NumberFormat("en-UG").format(activeLoan.balance||0)} is due in ${daysLeft} day${daysLeft!==1?"s":""} (${activeLoan.due_date}). Please arrange repayment.`,
         });
       }
       if (daysLeft < 0) {
         alerts.push({
-          type:"loan", icon:"⚠️", color:"#dc2626",
+          type:"loan", Icon:AlertTriangle, color:"#dc2626",
           msg:`Your loan is OVERDUE by ${Math.abs(daysLeft)} day${Math.abs(daysLeft)!==1?"s":""}. Please contact the office immediately.`,
         });
       }
@@ -1236,13 +1219,13 @@ export default function MemberPortal() {
   })();
 
   const tabs = [
-    { key:"home",     icon:"🏠", label:"Home"     },
-    { key:"savings",  icon:"💰", label:"Savings"  },
-    { key:"loan",     icon:"📋", label:"Loan"     },
-    { key:"treat",    icon:"🏦", label:"Treat"    },
-    { key:"welfare",  icon:"🤝", label:"Welfare"  },
-    { key:"contacts", icon:"📞", label:"Contacts", badge: unreadReplies },
-    { key:"profile",  icon:"👤", label:"Profile"  },
+    { key:"home",     Icon:Home,          label:"Home"     },
+    { key:"savings",  Icon:Wallet,        label:"Savings"  },
+    { key:"loan",     Icon:ClipboardList, label:"Loan"     },
+    { key:"treat",    Icon:Landmark,      label:"Treat"    },
+    { key:"welfare",  Icon:HandHeart,     label:"Welfare"  },
+    { key:"contacts", Icon:Phone,         label:"Contacts", badge: unreadReplies },
+    { key:"profile",  Icon:User,          label:"Profile"  },
   ];
 
   if (loading) {
@@ -1258,7 +1241,7 @@ export default function MemberPortal() {
   if (!member) {
     return (
       <div style={{ minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#fff",padding:24,textAlign:"center" }}>
-        <div style={{ fontSize:48,marginBottom:16 }}>⚠️</div>
+        <AlertTriangle size={48} color="#800020" style={{marginBottom:16}}/>
         <h3 style={{ color:"#800020",fontFamily:"Georgia, serif",margin:"0 0 8px" }}>Account Not Linked</h3>
         <p style={{ color:"#666",fontSize:14,margin:"0 0 20px" }}>Your login is not linked to a member record. Please contact the admin.</p>
         <button onClick={signOut} style={{ background:"#800020",color:"#fff",border:"none",borderRadius:10,padding:"12px 24px",fontWeight:700,cursor:"pointer",fontSize:14 }}>Sign Out</button>
@@ -1270,6 +1253,7 @@ export default function MemberPortal() {
     <div style={{ background:"#f8f7f5", minHeight:"100vh", fontFamily:"sans-serif" }}>
       <style>{`
         @keyframes spin{to{transform:rotate(360deg);}}
+        .spin-icon{animation:spin 0.9s linear infinite;}
         input:focus,select:focus,textarea:focus{border-color:#800020!important;box-shadow:0 0 0 3px rgba(128,0,32,0.08);outline:none;}
 
         /* ── Responsive layout ── */
@@ -1379,14 +1363,16 @@ export default function MemberPortal() {
             <div style={{ fontSize:11, fontWeight:700, color:"#aaa", textTransform:"uppercase", letterSpacing:0.6, padding:"4px 14px 8px" }}>
               Navigation
             </div>
-            {tabs.map(t => (
+            {tabs.map(t => {
+              const TabIcon = t.Icon;
+              return (
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
                 className={`sidenav-btn${tab === t.key ? " active" : ""}`}
                 style={{ position:"relative" }}
               >
-                <span className="nav-icon">{t.icon}</span>
+                <span className="nav-icon" style={{display:"flex",alignItems:"center"}}><TabIcon size={18} strokeWidth={2.2}/></span>
                 <span style={{flex:1}}>{t.label}</span>
                 {t.badge > 0 && (
                   <span style={{ background:"#dc2626", color:"#fff", fontSize:10, fontWeight:800, padding:"1px 6px", borderRadius:99 }}>
@@ -1394,11 +1380,11 @@ export default function MemberPortal() {
                   </span>
                 )}
               </button>
-            ))}
+            );})}
 
             <div style={{ marginTop:"auto", borderTop:"1px solid #f0e8ea", paddingTop:12 }}>
               <button onClick={signOut} className="sidenav-btn" style={{ color:"#800020" }}>
-                <span className="nav-icon">🚪</span>
+                <span className="nav-icon" style={{display:"flex",alignItems:"center"}}><LogOut size={18} strokeWidth={2.2}/></span>
                 <span>Sign Out</span>
               </button>
             </div>
@@ -1418,15 +1404,17 @@ export default function MemberPortal() {
 
         {/* ── Bottom nav (mobile only) */}
         <div className="portal-bottomnav">
-          {tabs.map(t => (
+          {tabs.map(t => {
+            const TabIcon = t.Icon;
+            return (
             <button key={t.key} onClick={() => setTab(t.key)} style={{
               flex:1, display:"flex", flexDirection:"column", alignItems:"center",
               gap:3, padding:"10px 4px 12px", border:"none",
               background:"none", cursor:"pointer", position:"relative",
               borderTop: tab===t.key ? "2.5px solid #800020" : "2.5px solid transparent",
             }}>
-              <span style={{ fontSize:20, position:"relative" }}>
-                {t.icon}
+              <span style={{ position:"relative", display:"flex", color: tab===t.key?"#800020":"#aaa" }}>
+                <TabIcon size={19} strokeWidth={tab===t.key?2.4:2}/>
                 {t.badge > 0 && (
                   <span style={{ position:"absolute", top:-4, right:-8, background:"#dc2626", color:"#fff", fontSize:9, fontWeight:800, padding:"1px 5px", borderRadius:99, lineHeight:1.3 }}>
                     {t.badge}
@@ -1437,7 +1425,7 @@ export default function MemberPortal() {
                 {t.label}
               </span>
             </button>
-          ))}
+          );})}
         </div>
 
       </div>

@@ -2,6 +2,11 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
+import {
+  LayoutDashboard, Users, Wallet, ClipboardList, AlertTriangle,
+  Package, HandHeart, Landmark, BarChart3, Inbox, MessageSquare,
+  ShieldCheck, Menu, LogOut,
+} from "lucide-react";
 
 export default function Sidebar() {
   const [open,    setOpen]    = useState(false);
@@ -17,16 +22,6 @@ export default function Sidebar() {
     const interval = setInterval(() => { loadPending(); loadUnreadMessages(); }, 30000);
     return () => clearInterval(interval);
   }, []);
-  useEffect(() => {
-  loadPending();
-  loadUnreadMessages();
-  const interval = setInterval(() => { loadPending(); loadUnreadMessages(); }, 30000);
-  window.addEventListener("peacevyn:refresh-badges", loadUnreadMessages);
-  return () => {
-    clearInterval(interval);
-    window.removeEventListener("peacevyn:refresh-badges", loadUnreadMessages);
-  };
-}, []);
 
   async function loadUnreadMessages() {
     const { count } = await supabase
@@ -47,20 +42,20 @@ export default function Sidebar() {
   }
 
   const navItems = [
-    { to:"/",         label:"Dashboard",  icon:"📊" },
-    { to:"/members",  label:"Members",    icon:"👥" },
-    { to:"/savings",  label:"Savings",    icon:"💰" },
-    { to:"/loans",    label:"Loans",      icon:"📋" },
-    { to:"/fines",    label:"Fines",      icon:"⚠️" },
-    { to:"/packages", label:"Packages",   icon:"📦" },
-    { to:"/welfare",  label:"Welfare",    icon:"🤝" },
-    { to:"/treat",    label:"The Treat",  icon:"🏦" },
-    { to:"/reports",  label:"Reports",    icon:"📊" },
+    { to:"/",         label:"Dashboard",  Icon:LayoutDashboard },
+    { to:"/members",  label:"Members",    Icon:Users },
+    { to:"/savings",  label:"Savings",    Icon:Wallet },
+    { to:"/loans",    label:"Loans",      Icon:ClipboardList },
+    { to:"/fines",    label:"Fines",      Icon:AlertTriangle },
+    { to:"/packages", label:"Packages",   Icon:Package },
+    { to:"/welfare",  label:"Welfare",    Icon:HandHeart },
+    { to:"/treat",    label:"The Treat",  Icon:Landmark },
+    { to:"/reports",  label:"Reports",    Icon:BarChart3 },
     // Admin-only pages
     ...(role === "admin" ? [
-      { to:"/requests", label:"Requests", icon:"📬", badge: pending },
-      { to:"/messages",  label:"Messages", icon:"💬", badge: unreadMsgs },
-      { to:"/users",     label:"Users",    icon:"🔐" },
+      { to:"/requests", label:"Requests", Icon:Inbox,          badge: pending },
+      { to:"/messages", label:"Messages", Icon:MessageSquare,  badge: unreadMsgs },
+      { to:"/users",    label:"Users",    Icon:ShieldCheck },
     ] : []),
   ];
 
@@ -76,7 +71,9 @@ export default function Sidebar() {
         {/* Toggle + brand */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
           {open && <span style={{ color:"#800020", fontWeight:800, fontSize:16, fontFamily:"Georgia, serif" }}>PeaceVyn</span>}
-          <button onClick={() => setOpen(!open)} style={{ background:"#800020",border:"none",color:"white",padding:"6px 10px",borderRadius:6,cursor:"pointer",marginLeft:"auto" }}>☰</button>
+          <button onClick={() => setOpen(!open)} style={{ background:"#800020",border:"none",color:"white",padding:"7px 9px",borderRadius:6,cursor:"pointer",marginLeft:"auto",display:"flex",alignItems:"center" }}>
+            <Menu size={16}/>
+          </button>
         </div>
 
         {/* Role badge */}
@@ -90,6 +87,7 @@ export default function Sidebar() {
         <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
           {navItems.map(item => {
             const isActive = location.pathname === item.to;
+            const Icon = item.Icon;
             return (
               <Link key={item.to} to={item.to} style={{
                 textDecoration:"none", color:"white",
@@ -101,7 +99,7 @@ export default function Sidebar() {
                 fontSize:13, fontWeight: isActive ? 700 : 400,
                 position:"relative",
               }}>
-                <span style={{ fontSize:18 }}>{item.icon}</span>
+                <Icon size={18} strokeWidth={isActive ? 2.4 : 2} style={{ flexShrink:0 }} />
                 {open && <span style={{ flex:1 }}>{item.label}</span>}
                 {item.badge > 0 && (
                   <span style={{ background:"#dc2626", color:"#fff", fontSize:10, fontWeight:800, padding:"1px 6px", borderRadius:99, position: open?"relative":"absolute", top: open?0:-4, right: open?0:-4 }}>
@@ -121,8 +119,13 @@ export default function Sidebar() {
             {user.email}
           </p>
         )}
-        <button onClick={signOut} title="Sign out" style={{ width:"100%",background:"#1a1a1a",border:"1px solid #333",color:"#ccc",padding:"8px",borderRadius:6,cursor:"pointer",fontSize:13,textAlign:open?"left":"center" }}>
-          {open ? "🚪 Sign Out" : "🚪"}
+        <button onClick={signOut} title="Sign out" style={{
+          width:"100%",background:"#1a1a1a",border:"1px solid #333",color:"#ccc",
+          padding:"8px",borderRadius:6,cursor:"pointer",fontSize:13,
+          display:"flex",alignItems:"center",justifyContent:open?"flex-start":"center",gap:8,
+        }}>
+          <LogOut size={15}/>
+          {open && <span>Sign Out</span>}
         </button>
       </div>
     </div>

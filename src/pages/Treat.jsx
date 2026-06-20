@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
+import {
+  Landmark, Users, KeyRound, ArrowDownToLine, ArrowUpFromLine,
+  CheckCircle2, XCircle, Search, X, ClipboardList, Pencil, Trash2,
+  ChevronLeft, ChevronRight, ChevronUp, ChevronDown, AlertTriangle,
+} from "lucide-react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const PAY_METHODS      = ["cash", "mobile_money", "bank_transfer", "cheque", "other"];
@@ -23,10 +28,12 @@ function Badge({ text }) {
 }
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
-function KPICard({ icon, label, value, sub, accent }) {
+function KPICard({ Icon, label, value, sub, accent }) {
   return (
     <div style={{background:"#fff",borderRadius:12,padding:"16px 18px",boxShadow:"0 2px 10px rgba(0,0,0,0.06)",borderLeft:`4px solid ${accent}`,display:"flex",gap:14,alignItems:"center"}}>
-      <div style={{width:44,height:44,borderRadius:10,background:`${accent}18`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{icon}</div>
+      <div style={{width:44,height:44,borderRadius:10,background:`${accent}18`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:accent}}>
+        <Icon size={22}/>
+      </div>
       <div>
         <div style={{fontSize:11,color:"#888",fontWeight:600,textTransform:"uppercase",letterSpacing:0.5}}>{label}</div>
         <div style={{fontSize:20,fontWeight:800,color:"#111",fontFamily:"Georgia, serif"}}>{value}</div>
@@ -95,7 +102,7 @@ function EnrolForm({ members, existingMemberIds, onSave, onCancel, saving }) {
   return (
     <div style={{display:"flex",flexDirection:"column",gap:16}}>
       <div style={{background:"linear-gradient(135deg,#800020,#b00030)",borderRadius:10,padding:"14px 18px",color:"#fff"}}>
-        <div style={{fontWeight:700,fontSize:15,marginBottom:4}}>🔑 Subscribe to The Treat</div>
+        <div style={{fontWeight:700,fontSize:15,marginBottom:4,display:"flex",alignItems:"center",gap:8}}><KeyRound size={17}/> Subscribe to The Treat</div>
         <div style={{fontSize:12,opacity:0.85,lineHeight:1.5}}>
           A one-time annual subscription of <strong>UGX 5,000</strong> activates the member's emergency account.
           This fee belongs to the committee and is <strong>not added to the member's balance.</strong>
@@ -179,7 +186,10 @@ function TxForm({ account, memberName, currentBalance, txType, onSave, onCancel,
     <div style={{display:"flex",flexDirection:"column",gap:16}}>
       <div style={{background:`linear-gradient(135deg,${isWithdrawal?"#dc2626":"#15803d"},${isWithdrawal?"#b91c1c":"#166534"})`,borderRadius:10,padding:"14px 18px",color:"#fff"}}>
         <div style={{fontSize:12,opacity:0.8,marginBottom:2}}>{memberName} · {account.account_number}</div>
-        <div style={{fontSize:22,fontWeight:800,fontFamily:"Georgia, serif"}}>{isWithdrawal?"📤 Withdrawal":"📥 Deposit"}</div>
+        <div style={{fontSize:22,fontWeight:800,fontFamily:"Georgia, serif",display:"flex",alignItems:"center",gap:8}}>
+          {isWithdrawal ? <ArrowUpFromLine size={20}/> : <ArrowDownToLine size={20}/>}
+          {isWithdrawal?"Withdrawal":"Deposit"}
+        </div>
         <div style={{fontSize:13,opacity:0.8,marginTop:4}}>Current Balance: <strong>UGX {fmt(currentBalance)}</strong></div>
       </div>
 
@@ -302,8 +312,8 @@ function AddDepositForm({ members, subscribedMemberIds, accounts, getBalance, on
 
       <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
         <button onClick={onCancel} style={{padding:"10px 20px",borderRadius:8,border:"1.5px solid #e5e7eb",background:"#fff",color:"#555",fontWeight:600,cursor:"pointer",fontSize:14}}>Cancel</button>
-        <button onClick={handleSave} disabled={saving} style={{padding:"10px 24px",borderRadius:8,border:"none",background:saving?"#aaa":"#15803d",color:"#fff",fontWeight:700,cursor:saving?"not-allowed":"pointer",fontSize:14}}>
-          {saving?"Saving…":"📥 Add Deposit"}
+        <button onClick={handleSave} disabled={saving} style={{padding:"10px 24px",borderRadius:8,border:"none",background:saving?"#aaa":"#15803d",color:"#fff",fontWeight:700,cursor:saving?"not-allowed":"pointer",fontSize:14,display:"flex",alignItems:"center",gap:6}}>
+          {saving?"Saving…":<><ArrowDownToLine size={15}/> Add Deposit</>}
         </button>
       </div>
     </div>
@@ -328,10 +338,10 @@ function MemberLedger({ account, memberName, transactions, onClose, onDeposit, o
           <div style={{color:"#fff",fontSize:28,fontWeight:800,fontFamily:"Georgia, serif",marginTop:4}}>UGX {fmt(currentBalance)}</div>
           <div style={{color:"rgba(255,255,255,0.7)",fontSize:12,marginTop:6,display:"flex",gap:10,alignItems:"center"}}>
             <span>{account.account_number}</span>
-            {isSubscribed && <span style={{background:"rgba(255,255,255,0.2)",padding:"2px 8px",borderRadius:99,fontSize:11,fontWeight:700}}>✓ Subscribed</span>}
+            {isSubscribed && <span style={{background:"rgba(255,255,255,0.2)",padding:"2px 8px",borderRadius:99,fontSize:11,fontWeight:700,display:"flex",alignItems:"center",gap:3}}><CheckCircle2 size={11}/>Subscribed</span>}
           </div>
         </div>
-        <div style={{fontSize:40,opacity:0.2}}>🏦</div>
+        <Landmark size={36} style={{opacity:0.25,color:"#fff"}}/>
       </div>
 
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
@@ -348,8 +358,8 @@ function MemberLedger({ account, memberName, transactions, onClose, onDeposit, o
 
       {isAdmin && isSubscribed && (
         <div style={{display:"flex",gap:8,marginBottom:16}}>
-          <button onClick={onDeposit} style={{flex:1,padding:"10px",borderRadius:8,border:"none",background:"#15803d",color:"#fff",fontWeight:700,cursor:"pointer",fontSize:14}}>📥 Add Deposit</button>
-          <button onClick={onWithdraw} disabled={currentBalance<=0} style={{flex:1,padding:"10px",borderRadius:8,border:"none",background:currentBalance<=0?"#e5e7eb":"#dc2626",color:currentBalance<=0?"#aaa":"#fff",fontWeight:700,cursor:currentBalance<=0?"not-allowed":"pointer",fontSize:14}}>📤 Withdraw</button>
+          <button onClick={onDeposit} style={{flex:1,padding:"10px",borderRadius:8,border:"none",background:"#15803d",color:"#fff",fontWeight:700,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}><ArrowDownToLine size={15}/> Add Deposit</button>
+          <button onClick={onWithdraw} disabled={currentBalance<=0} style={{flex:1,padding:"10px",borderRadius:8,border:"none",background:currentBalance<=0?"#e5e7eb":"#dc2626",color:currentBalance<=0?"#aaa":"#fff",fontWeight:700,cursor:currentBalance<=0?"not-allowed":"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}><ArrowUpFromLine size={15}/> Withdraw</button>
         </div>
       )}
 
@@ -361,8 +371,8 @@ function MemberLedger({ account, memberName, transactions, onClose, onDeposit, o
           {memberTx.map((t,i)=>(
             <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:"#fafafa",borderRadius:8,border:"1px solid #f3f4f6"}}>
               <div style={{display:"flex",gap:10,alignItems:"center"}}>
-                <div style={{width:32,height:32,borderRadius:"50%",background:t.transaction_type==="withdrawal"?"#fee2e2":"#dcfce7",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>
-                  {t.transaction_type==="withdrawal"?"📤":"📥"}
+                <div style={{width:32,height:32,borderRadius:"50%",background:t.transaction_type==="withdrawal"?"#fee2e2":"#dcfce7",display:"flex",alignItems:"center",justifyContent:"center",color:t.transaction_type==="withdrawal"?"#dc2626":"#15803d"}}>
+                  {t.transaction_type==="withdrawal" ? <ArrowUpFromLine size={15}/> : <ArrowDownToLine size={15}/>}
                 </div>
                 <div>
                   <div style={{fontSize:13,fontWeight:600,color:"#111",textTransform:"capitalize"}}>{t.transaction_type}</div>
@@ -525,8 +535,8 @@ export default function Treat() {
     <div style={{background:"#f8f7f5",minHeight:"100vh",padding:"20px 16px",fontFamily:"sans-serif"}}>
 
       {toast && (
-        <div style={{position:"fixed",top:20,right:20,zIndex:9999,background:toast.type==="error"?"#dc2626":"#15803d",color:"#fff",padding:"12px 20px",borderRadius:10,fontWeight:600,fontSize:14,boxShadow:"0 8px 24px rgba(0,0,0,0.2)",animation:"slideIn 0.3s ease"}}>
-          {toast.type==="error"?"⚠ ":"✓ "}{toast.msg}
+        <div style={{position:"fixed",top:20,right:20,zIndex:9999,background:toast.type==="error"?"#dc2626":"#15803d",color:"#fff",padding:"12px 20px",borderRadius:10,fontWeight:600,fontSize:14,boxShadow:"0 8px 24px rgba(0,0,0,0.2)",animation:"slideIn 0.3s ease",display:"flex",alignItems:"center",gap:8}}>
+          {toast.type==="error" ? <AlertTriangle size={16}/> : <CheckCircle2 size={16}/>}{toast.msg}
         </div>
       )}
 
@@ -540,18 +550,20 @@ export default function Treat() {
       {/* ── Header */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20,flexWrap:"wrap",gap:10}}>
         <div>
-          <h1 style={{margin:0,fontSize:22,fontWeight:800,color:"#800020",fontFamily:"Georgia, serif"}}>The Treat 🏦</h1>
+          <h1 style={{margin:0,fontSize:22,fontWeight:800,color:"#800020",fontFamily:"Georgia, serif",display:"flex",alignItems:"center",gap:10}}>
+            <Landmark size={22}/> The Treat
+          </h1>
           <p style={{margin:"4px 0 0",fontSize:13,color:"#888"}}>
             Emergency flexible savings · {totalEnrolled} enrolled · {totalSubscribed} subscribed
           </p>
         </div>
         {isAdmin && (
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-            <button onClick={()=>setShowAddDeposit(true)} style={{background:"#15803d",color:"#fff",border:"none",borderRadius:8,padding:"10px 16px",fontWeight:700,cursor:"pointer",fontSize:13}}>
-              📥 Add Deposit
+            <button onClick={()=>setShowAddDeposit(true)} style={{background:"#15803d",color:"#fff",border:"none",borderRadius:8,padding:"10px 16px",fontWeight:700,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:6}}>
+              <ArrowDownToLine size={15}/> Add Deposit
             </button>
-            <button onClick={()=>setShowEnrol(true)} style={{background:"#800020",color:"#fff",border:"none",borderRadius:8,padding:"10px 16px",fontWeight:700,cursor:"pointer",fontSize:13}}>
-              🔑 Subscribe Member
+            <button onClick={()=>setShowEnrol(true)} style={{background:"#800020",color:"#fff",border:"none",borderRadius:8,padding:"10px 16px",fontWeight:700,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:6}}>
+              <KeyRound size={15}/> Subscribe Member
             </button>
           </div>
         )}
@@ -559,11 +571,11 @@ export default function Treat() {
 
       {/* ── KPI Cards */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(165px,1fr))",gap:12,marginBottom:20}}>
-        <KPICard icon="🏦" label="Total Treat Fund"    value={`UGX ${fmt(totalFund)}`}        sub="members' combined balances"  accent="#800020"/>
-        <KPICard icon="👥" label="Enrolled"             value={totalEnrolled}                   sub="members enrolled"            accent="#2563eb"/>
-        {isAdmin && <KPICard icon="🔑" label="Subscription Revenue" value={`UGX ${fmt(subRevenue)}`} sub={`${totalSubscribed} subscribed — committee fund`} accent="#7e22ce"/>}
-        <KPICard icon="📥" label="Total Deposited"      value={`UGX ${fmt(totalDeposits)}`}    sub="all-time member deposits"    accent="#15803d"/>
-        <KPICard icon="📤" label="Total Withdrawn"      value={`UGX ${fmt(totalWithdrawals)}`} sub="all-time withdrawals"        accent="#dc2626"/>
+        <KPICard Icon={Landmark} label="Total Treat Fund"    value={`UGX ${fmt(totalFund)}`}        sub="members' combined balances"  accent="#800020"/>
+        <KPICard Icon={Users}    label="Enrolled"             value={totalEnrolled}                   sub="members enrolled"            accent="#2563eb"/>
+        {isAdmin && <KPICard Icon={KeyRound} label="Subscription Revenue" value={`UGX ${fmt(subRevenue)}`} sub={`${totalSubscribed} subscribed — committee fund`} accent="#7e22ce"/>}
+        <KPICard Icon={ArrowDownToLine} label="Total Deposited"      value={`UGX ${fmt(totalDeposits)}`}    sub="all-time member deposits"    accent="#15803d"/>
+        <KPICard Icon={ArrowUpFromLine} label="Total Withdrawn"      value={`UGX ${fmt(totalWithdrawals)}`} sub="all-time withdrawals"        accent="#dc2626"/>
       </div>
 
       {/* ── Member Account Cards */}
@@ -573,8 +585,10 @@ export default function Treat() {
             onClick={()=>setShowAccounts(s=>!s)}
             style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",background:"#fff",border:"1px solid #f3e8ea",borderRadius:10,padding:"12px 16px",cursor:"pointer",marginBottom:showAccounts?12:0,boxShadow:"0 2px 8px rgba(0,0,0,0.05)"}}
           >
-            <span style={{fontWeight:700,fontSize:15,color:"#111"}}>👥 Member Accounts ({enrolledAccounts.length})</span>
-            <span style={{color:"#800020",fontSize:14,fontWeight:700}}>{showAccounts?"▲ Hide":"▼ Show"}</span>
+            <span style={{fontWeight:700,fontSize:15,color:"#111",display:"flex",alignItems:"center",gap:8}}><Users size={16}/> Member Accounts ({enrolledAccounts.length})</span>
+            <span style={{color:"#800020",fontSize:13,fontWeight:700,display:"flex",alignItems:"center",gap:4}}>
+              {showAccounts ? <ChevronUp size={15}/> : <ChevronDown size={15}/>}{showAccounts?"Hide":"Show"}
+            </span>
           </button>
           {showAccounts && <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:12}}>
             {enrolledAccounts.map(acc=>{
@@ -592,26 +606,26 @@ export default function Treat() {
                     {/* Balance — subscription fee NOT shown here */}
                     <div style={{fontSize:22,fontWeight:800,color:"#800020",marginBottom:4}}>UGX {fmt(balance)}</div>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                      <span style={{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:99,background:subscribed?"#dcfce7":"#fee2e2",color:subscribed?"#15803d":"#dc2626"}}>
-                        {subscribed?"✓ Subscribed":"✗ Not Subscribed"}
+                      <span style={{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:99,background:subscribed?"#dcfce7":"#fee2e2",color:subscribed?"#15803d":"#dc2626",display:"flex",alignItems:"center",gap:4}}>
+                        {subscribed ? <CheckCircle2 size={11}/> : <XCircle size={11}/>}{subscribed?"Subscribed":"Not Subscribed"}
                       </span>
                       {lastTx && <span style={{fontSize:11,color:"#aaa"}}>{lastTx.transaction_date}</span>}
                     </div>
 
                     <div style={{display:"flex",gap:6}}>
-                      <button onClick={()=>setLedgerAccount(acc)} style={{flex:1,padding:"7px",borderRadius:7,border:"1px solid #e5e7eb",background:"#fff",color:"#555",fontWeight:600,cursor:"pointer",fontSize:12}}>
-                        📋 Ledger
+                      <button onClick={()=>setLedgerAccount(acc)} style={{flex:1,padding:"7px",borderRadius:7,border:"1px solid #e5e7eb",background:"#fff",color:"#555",fontWeight:600,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                        <ClipboardList size={13}/> Ledger
                       </button>
                       {/* Only show deposit/withdraw if subscribed */}
                       {isAdmin && subscribed && (
                         <>
-                          <button onClick={()=>setDepositFor(acc)} style={{flex:1,padding:"7px",borderRadius:7,border:"none",background:"#dcfce7",color:"#15803d",fontWeight:700,cursor:"pointer",fontSize:12}}>📥</button>
-                          <button onClick={()=>setWithdrawFor(acc)} disabled={balance<=0} style={{flex:1,padding:"7px",borderRadius:7,border:"none",background:balance<=0?"#f3f4f6":"#fee2e2",color:balance<=0?"#ccc":"#dc2626",fontWeight:700,cursor:balance<=0?"not-allowed":"pointer",fontSize:12}}>📤</button>
+                          <button onClick={()=>setDepositFor(acc)} style={{flex:1,padding:"7px",borderRadius:7,border:"none",background:"#dcfce7",color:"#15803d",fontWeight:700,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}><ArrowDownToLine size={14}/></button>
+                          <button onClick={()=>setWithdrawFor(acc)} disabled={balance<=0} style={{flex:1,padding:"7px",borderRadius:7,border:"none",background:balance<=0?"#f3f4f6":"#fee2e2",color:balance<=0?"#ccc":"#dc2626",fontWeight:700,cursor:balance<=0?"not-allowed":"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}><ArrowUpFromLine size={14}/></button>
                         </>
                       )}
                       {isAdmin && !subscribed && (
-                        <button onClick={()=>setShowEnrol(true)} style={{flex:2,padding:"7px",borderRadius:7,border:"1px solid #800020",background:"#fff5f7",color:"#800020",fontWeight:700,cursor:"pointer",fontSize:11}}>
-                          🔑 Subscribe
+                        <button onClick={()=>setShowEnrol(true)} style={{flex:2,padding:"7px",borderRadius:7,border:"1px solid #800020",background:"#fff5f7",color:"#800020",fontWeight:700,cursor:"pointer",fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                          <KeyRound size={13}/> Subscribe
                         </button>
                       )}
                     </div>
@@ -629,7 +643,7 @@ export default function Treat() {
       {/* Filters */}
       <div style={{background:"#fff",borderRadius:12,padding:"12px 16px",boxShadow:"0 2px 8px rgba(0,0,0,0.05)",marginBottom:14,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
         <div style={{position:"relative",flex:"1 1 200px"}}>
-          <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"#aaa"}}>🔍</span>
+          <Search size={15} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"#aaa"}}/>
           <input placeholder="Search member, account, reference…" value={search}
             onChange={e=>{setSearch(e.target.value);setPage(1);}}
             style={{...inp,paddingLeft:32}}/>
@@ -642,7 +656,7 @@ export default function Treat() {
         </select>
         {(search||typeFilter!=="all") && (
           <button onClick={()=>{setSearch("");setTypeFilter("all");setPage(1);}}
-            style={{background:"#fee2e2",color:"#dc2626",border:"none",borderRadius:6,padding:"8px 12px",cursor:"pointer",fontSize:12,fontWeight:700}}>✕ Clear</button>
+            style={{background:"#fee2e2",color:"#dc2626",border:"none",borderRadius:6,padding:"8px 12px",cursor:"pointer",fontSize:12,fontWeight:700,display:"flex",alignItems:"center",gap:4}}><X size={13}/> Clear</button>
         )}
         <span style={{fontSize:13,color:"#888",whiteSpace:"nowrap"}}>{filtered.length} record{filtered.length!==1?"s":""}</span>
       </div>
@@ -656,7 +670,7 @@ export default function Treat() {
           </div>
         ) : paginated.length===0 ? (
           <div style={{padding:"52px 20px",textAlign:"center"}}>
-            <div style={{fontSize:42,marginBottom:10}}>🏦</div>
+            <Landmark size={42} style={{marginBottom:10,opacity:0.3,color:"#800020"}}/>
             <p style={{color:"#888",margin:0,fontSize:15}}>No deposits or withdrawals yet.</p>
             {isAdmin && <button onClick={()=>setShowEnrol(true)} style={{marginTop:16,background:"#800020",color:"#fff",border:"none",borderRadius:8,padding:"10px 20px",fontWeight:700,cursor:"pointer",fontSize:14}}>Subscribe First Member</button>}
           </div>
@@ -682,8 +696,8 @@ export default function Treat() {
                     {/* Subscription status — just a badge, no fee amount */}
                     <td style={{padding:"11px 14px"}}>
                       {subscribedIds.has(t.member_id)
-                        ? <span style={{background:"#dcfce7",color:"#15803d",fontSize:11,fontWeight:700,padding:"3px 8px",borderRadius:99}}>✓ Subscribed</span>
-                        : <span style={{background:"#fee2e2",color:"#dc2626",fontSize:11,fontWeight:700,padding:"3px 8px",borderRadius:99}}>✗ No</span>
+                        ? <span style={{background:"#dcfce7",color:"#15803d",fontSize:11,fontWeight:700,padding:"3px 8px",borderRadius:99,display:"inline-flex",alignItems:"center",gap:3}}><CheckCircle2 size={11}/>Subscribed</span>
+                        : <span style={{background:"#fee2e2",color:"#dc2626",fontSize:11,fontWeight:700,padding:"3px 8px",borderRadius:99,display:"inline-flex",alignItems:"center",gap:3}}><XCircle size={11}/>No</span>
                       }
                     </td>
                     <td style={{padding:"11px 14px"}}><Badge text={t.transaction_type}/></td>
@@ -702,15 +716,15 @@ export default function Treat() {
                       <div style={{display:"flex",gap:6}}>
                         {isAdmin && (
                           <button onClick={()=>setDepositFor({member_id:t.member_id,account_number:t.account_number})} title="Add deposit"
-                            style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:13}}>📥</button>
+                            style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:6,padding:"5px 9px",cursor:"pointer",display:"flex",alignItems:"center",color:"#15803d"}}><ArrowDownToLine size={13}/></button>
                         )}
                         {isAdmin && (
                           <button onClick={()=>setEditRecord(t)} title="Edit"
-                            style={{background:"#fff5f7",border:"1px solid #f9c0c0",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:13}}>✏️</button>
+                            style={{background:"#fff5f7",border:"1px solid #f9c0c0",borderRadius:6,padding:"5px 9px",cursor:"pointer",display:"flex",alignItems:"center",color:"#800020"}}><Pencil size={13}/></button>
                         )}
                         {isAdmin && (
                           <button onClick={()=>setConfirmDelete(t)} title="Delete"
-                            style={{background:"#fff5f5",border:"1px solid #fca5a5",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:13}}>🗑</button>
+                            style={{background:"#fff5f5",border:"1px solid #fca5a5",borderRadius:6,padding:"5px 9px",cursor:"pointer",display:"flex",alignItems:"center",color:"#dc2626"}}><Trash2 size={13}/></button>
                         )}
                       </div>
                     </td>
@@ -738,7 +752,7 @@ export default function Treat() {
             <span style={{fontSize:13,color:"#888"}}>Showing {(page-1)*PER_PAGE+1}–{Math.min(page*PER_PAGE,filtered.length)} of {filtered.length}</span>
             <div style={{display:"flex",gap:6}}>
               <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
-                style={{padding:"6px 14px",borderRadius:6,border:"1px solid #e5e7eb",background:"#fff",cursor:page===1?"not-allowed":"pointer",color:page===1?"#ccc":"#111",fontWeight:600,fontSize:13}}>← Prev</button>
+                style={{padding:"6px 14px",borderRadius:6,border:"1px solid #e5e7eb",background:"#fff",cursor:page===1?"not-allowed":"pointer",color:page===1?"#ccc":"#111",fontWeight:600,fontSize:13,display:"flex",alignItems:"center",gap:4}}><ChevronLeft size={14}/>Prev</button>
               {Array.from({length:totalPages},(_,i)=>i+1)
                 .filter(p=>p===1||p===totalPages||Math.abs(p-page)<=1)
                 .reduce((acc,p,i,arr)=>{if(i>0&&p-arr[i-1]>1)acc.push("...");acc.push(p);return acc;},[])
@@ -747,7 +761,7 @@ export default function Treat() {
                   :<button key={p} onClick={()=>setPage(p)} style={{padding:"6px 12px",borderRadius:6,border:"1px solid",borderColor:page===p?"#800020":"#e5e7eb",background:page===p?"#800020":"#fff",color:page===p?"#fff":"#111",fontWeight:700,cursor:"pointer",fontSize:13}}>{p}</button>
                 )}
               <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
-                style={{padding:"6px 14px",borderRadius:6,border:"1px solid #e5e7eb",background:"#fff",cursor:page===totalPages?"not-allowed":"pointer",color:page===totalPages?"#ccc":"#111",fontWeight:600,fontSize:13}}>Next →</button>
+                style={{padding:"6px 14px",borderRadius:6,border:"1px solid #e5e7eb",background:"#fff",cursor:page===totalPages?"not-allowed":"pointer",color:page===totalPages?"#ccc":"#111",fontWeight:600,fontSize:13,display:"flex",alignItems:"center",gap:4}}>Next<ChevronRight size={14}/></button>
             </div>
           </div>
         )}
@@ -868,7 +882,7 @@ export default function Treat() {
       {confirmDelete && (
         <Modal title="Delete Transaction" onClose={()=>setConfirmDelete(null)}>
           <div style={{textAlign:"center",padding:"8px 0 16px"}}>
-            <div style={{fontSize:44,marginBottom:12}}>⚠️</div>
+            <AlertTriangle size={40} color="#dc2626" style={{marginBottom:12}}/>
             <p style={{fontSize:16,color:"#111",fontWeight:600,margin:"0 0 6px"}}>Delete this transaction?</p>
             <p style={{fontSize:14,color:"#800020",fontWeight:700,margin:"0 0 4px"}}>
               UGX {fmt(confirmDelete.amount)} — {getMemberName(confirmDelete.member_id)}

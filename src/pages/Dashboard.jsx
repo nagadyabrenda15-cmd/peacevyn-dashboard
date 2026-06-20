@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
+import {
+  Users, Wallet, HandHeart, ClipboardList, AlertTriangle,
+  BarChart3, CheckCircle2, XCircle, Landmark, RefreshCw, Trophy,
+} from "lucide-react";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmt = (n) =>
@@ -108,7 +112,7 @@ function DonutChart({ slices, size = 100 }) {
 }
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
-function KPICard({ title, value, sub, icon, color, trend, trendUp }) {
+function KPICard({ title, value, sub, Icon, color, trend, trendUp }) {
   return (
     <div style={{
       background: "#fff",
@@ -124,7 +128,14 @@ function KPICard({ title, value, sub, icon, color, trend, trendUp }) {
         <span style={{ fontSize: 12, color: "#888", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>
           {title}
         </span>
-        <span style={{ fontSize: 22 }}>{icon}</span>
+        <span style={{
+          width: 34, height: 34, borderRadius: 9,
+          background: `${color}15`, color: color,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          flexShrink: 0,
+        }}>
+          <Icon size={17} strokeWidth={2.2} />
+        </span>
       </div>
       <div style={{ fontSize: 24, fontWeight: 800, color: "#111", fontFamily: "Georgia, serif" }}>
         {value}
@@ -301,9 +312,9 @@ export default function Dashboard() {
     ]);
 
     const activities = [
-      ...(sv.data || []).map(r => ({ type: "savings", amount: r.amount, time: r.created_at, icon: "💰", color: "#16a34a", label: "Savings deposit" })),
-      ...(ln.data || []).map(r => ({ type: "loan", amount: r.loan_amount, time: r.created_at, icon: "📋", color: "#2563eb", label: `Loan — ${r.loan_status}` })),
-      ...(fi.data || []).map(r => ({ type: "fine", amount: r.amount, time: r.created_at, icon: "⚠️", color: "#dc2626", label: `Fine: ${r.fine_reason || "issued"}` })),
+      ...(sv.data || []).map(r => ({ type: "savings", amount: r.amount, time: r.created_at, color: "#16a34a", label: "Savings deposit" })),
+      ...(ln.data || []).map(r => ({ type: "loan", amount: r.loan_amount, time: r.created_at, color: "#2563eb", label: `Loan — ${r.loan_status}` })),
+      ...(fi.data || []).map(r => ({ type: "fine", amount: r.amount, time: r.created_at, color: "#dc2626", label: `Fine: ${r.fine_reason || "issued"}` })),
     ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 8);
 
     setRecentActivity(activities);
@@ -378,35 +389,35 @@ export default function Dashboard() {
         </div>
         <button
           onClick={loadAll}
-          style={{ background: "#800020", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontSize: 13, fontWeight: 600 }}
+          style={{ background: "#800020", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontSize: 13, fontWeight: 600, display:"flex", alignItems:"center", gap:6 }}
         >
-          ↻ Refresh
+          <RefreshCw size={14}/> Refresh
         </button>
       </div>
 
       {/* ── KPI Row 1: Members & Savings */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 12 }}>
-        <KPICard title="Total Members" value={kpi.totalMembers} icon="👥"
+        <KPICard title="Total Members" value={kpi.totalMembers} Icon={Users}
           color="#800020" sub={`${kpi.activeMembers} active · ${kpi.inactiveMembers} inactive`} />
-        <KPICard title="Total Savings" value={`UGX ${fmt(kpi.totalSavings)}`} icon="💰"
+        <KPICard title="Total Savings" value={`UGX ${fmt(kpi.totalSavings)}`} Icon={Wallet}
           color="#16a34a" sub={`Avg UGX ${fmt(kpi.avgSavingsPerMember)} / member`} />
-        <KPICard title="Welfare Fund" value={`UGX ${fmt(kpi.totalWelfare)}`} icon="🤝"
+        <KPICard title="Welfare Fund" value={`UGX ${fmt(kpi.totalWelfare)}`} Icon={HandHeart}
           color="#7c3aed" sub="Total welfare contributions" />
-        <KPICard title="Outstanding Loans" value={`UGX ${fmt(kpi.outstandingLoans)}`} icon="📋"
+        <KPICard title="Outstanding Loans" value={`UGX ${fmt(kpi.outstandingLoans)}`} Icon={ClipboardList}
           color="#2563eb" sub={`${kpi.approvedLoans} active · ${kpi.pendingLoans} pending`} />
       </div>
 
       {/* ── KPI Row 2: Fines & Rates */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20 }}>
-        <KPICard title="Total Fines Issued" value={`UGX ${fmt(kpi.totalFines)}`} icon="⚠️"
+        <KPICard title="Total Fines Issued" value={`UGX ${fmt(kpi.totalFines)}`} Icon={AlertTriangle}
           color="#dc2626" sub={`UGX ${fmt(kpi.unpaidFines)} still unpaid`} />
-        <KPICard title="Fine Collection Rate" value={`${kpi.collectionRate}%`} icon="📊"
+        <KPICard title="Fine Collection Rate" value={`${kpi.collectionRate}%`} Icon={BarChart3}
           color="#ca8a04" sub={`UGX ${fmt(kpi.paidFines)} collected`}
           trend={`${kpi.collectionRate}% collected`} trendUp={kpi.collectionRate >= 70} />
-        <KPICard title="Loan Repayment Rate" value={`${kpi.loanRepaymentRate}%`} icon="✅"
+        <KPICard title="Loan Repayment Rate" value={`${kpi.loanRepaymentRate}%`} Icon={CheckCircle2}
           color="#0891b2" sub={`UGX ${fmt(kpi.totalLoans)} total issued`}
           trend={`${kpi.loanRepaymentRate}% repaid`} trendUp={kpi.loanRepaymentRate >= 60} />
-        <KPICard title="Loan Portfolio" value={`UGX ${fmt(kpi.totalLoans)}`} icon="🏦"
+        <KPICard title="Loan Portfolio" value={`UGX ${fmt(kpi.totalLoans)}`} Icon={Landmark}
           color="#800020" sub="Total loans ever issued" />
       </div>
 
@@ -476,8 +487,8 @@ export default function Dashboard() {
             height={90}
           />
           <div style={{ display: "flex", justifyContent: "space-around", marginTop: 8 }}>
-            <span style={{ fontSize: 11, color: "#16a34a", fontWeight: 700 }}>✓ Paid: {fmt(kpi.paidFines)}</span>
-            <span style={{ fontSize: 11, color: "#dc2626", fontWeight: 700 }}>✗ Unpaid: {fmt(kpi.unpaidFines)}</span>
+            <span style={{ fontSize: 11, color: "#16a34a", fontWeight: 700, display:"flex", alignItems:"center", gap:4 }}><CheckCircle2 size={12}/> Paid: {fmt(kpi.paidFines)}</span>
+            <span style={{ fontSize: 11, color: "#dc2626", fontWeight: 700, display:"flex", alignItems:"center", gap:4 }}><XCircle size={12}/> Unpaid: {fmt(kpi.unpaidFines)}</span>
           </div>
         </Panel>
       </div>
@@ -492,14 +503,16 @@ export default function Dashboard() {
             <p style={{ color: "#aaa", fontSize: 13, textAlign: "center", marginTop: 20 }}>No activity recorded today</p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {recentActivity.map((a, i) => (
+              {recentActivity.map((a, i) => {
+                const ActIcon = a.type === "savings" ? Wallet : a.type === "loan" ? ClipboardList : AlertTriangle;
+                return (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <div style={{
                     width: 34, height: 34, borderRadius: "50%",
-                    background: `${a.color}18`,
+                    background: `${a.color}18`, color: a.color,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 16, flexShrink: 0,
-                  }}>{a.icon}</div>
+                    flexShrink: 0,
+                  }}><ActIcon size={16} strokeWidth={2.2}/></div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: "#111", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {a.label}
@@ -512,7 +525,7 @@ export default function Dashboard() {
                     +{fmt(a.amount)}
                   </div>
                 </div>
-              ))}
+              );})}
             </div>
           )}
         </Panel>
@@ -530,8 +543,13 @@ export default function Dashboard() {
                 return (
                   <div key={i}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3, fontSize: 13 }}>
-                      <span style={{ fontWeight: 600, color: "#111" }}>
-                        {i === 0 ? "🥇 " : i === 1 ? "🥈 " : i === 2 ? "🥉 " : `${i+1}. `}{s.name}
+                      <span style={{ fontWeight: 600, color: "#111", display:"flex", alignItems:"center", gap:6 }}>
+                        {i < 3 ? (
+                          <Trophy size={13} color={i===0?"#ca8a04":i===1?"#94a3b8":"#b45309"} />
+                        ) : (
+                          <span style={{fontSize:11,color:"#aaa",width:13,textAlign:"center"}}>{i+1}</span>
+                        )}
+                        {s.name}
                       </span>
                       <span style={{ color: "#800020", fontWeight: 700 }}>UGX {fmt(s.total)}</span>
                     </div>
