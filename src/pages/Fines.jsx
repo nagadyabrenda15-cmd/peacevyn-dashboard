@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
+import {
+  AlertTriangle, XCircle, CheckCircle2, BarChart3, Clock, HandHeart,
+  Search, X, Inbox, Eye, Pencil, Trash2, ChevronLeft, ChevronRight,
+} from "lucide-react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const FINE_STATUSES = ["unpaid", "paid", "waived", "partial"];
@@ -30,7 +34,7 @@ function Badge({ text }) {
 }
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
-function KPICard({ icon, label, value, sub, accent }) {
+function KPICard({ Icon, label, value, sub, accent }) {
   return (
     <div style={{
       background: "#fff", borderRadius: 12, padding: "16px 18px",
@@ -40,8 +44,8 @@ function KPICard({ icon, label, value, sub, accent }) {
       <div style={{
         width: 44, height: 44, borderRadius: 10, background: `${accent}18`,
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 22, flexShrink: 0,
-      }}>{icon}</div>
+        flexShrink: 0, color: accent,
+      }}><Icon size={22}/></div>
       <div>
         <div style={{ fontSize: 11, color: "#888", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>{label}</div>
         <div style={{ fontSize: 20, fontWeight: 800, color: "#111", fontFamily: "Georgia, serif" }}>{value}</div>
@@ -236,7 +240,7 @@ function MarkPaidForm({ fine, memberName, onSave, onCancel, saving }) {
           padding: "10px 24px", borderRadius: 8, border: "none",
           background: saving ? "#c0606f" : "#15803d", color: "#fff",
           fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", fontSize: 14,
-        }}>{saving ? "Updating…" : "✓ Update Status"}</button>
+        }}>{saving ? "Updating…" : <span style={{display:"flex",alignItems:"center",gap:6}}><CheckCircle2 size={14}/>Update Status</span>}</button>
       </div>
     </div>
   );
@@ -273,7 +277,7 @@ function ViewFine({ fine, memberName, onClose, onEdit, onMarkPaid, isAdmin }) {
             <span style={{ color: "rgba(255,255,255,0.65)", fontSize: 12 }}>{memberName}</span>
           </div>
         </div>
-        <div style={{ fontSize: 40, opacity: 0.2 }}>⚠️</div>
+        <AlertTriangle size={36} style={{opacity:0.3,color:"#fff"}}/>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: "#f3f4f6", borderRadius: 10, overflow: "hidden", marginBottom: 20 }}>
@@ -294,12 +298,14 @@ function ViewFine({ fine, memberName, onClose, onEdit, onMarkPaid, isAdmin }) {
             <button onClick={onMarkPaid} style={{
               padding: "10px 20px", borderRadius: 8, border: "none",
               background: "#15803d", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 14,
-            }}>✓ Update Status</button>
+              display:"flex",alignItems:"center",gap:6,
+            }}><CheckCircle2 size={15}/>Update Status</button>
           )}
           <button onClick={onEdit} style={{
             padding: "10px 20px", borderRadius: 8, border: "none",
             background: "#800020", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 14,
-          }}>✏️ Edit Fine</button>
+            display:"flex",alignItems:"center",gap:6,
+          }}><Pencil size={15}/>Edit Fine</button>
         </div>
       )}
     </Modal>
@@ -459,9 +465,9 @@ export default function Fines() {
           background: toast.type === "error" ? "#dc2626" : "#15803d",
           color: "#fff", padding: "12px 20px", borderRadius: 10,
           fontWeight: 600, fontSize: 14, boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-          animation: "slideIn 0.3s ease",
+          animation: "slideIn 0.3s ease", display:"flex", alignItems:"center", gap:8,
         }}>
-          {toast.type === "error" ? "⚠ " : "✓ "}{toast.msg}
+          {toast.type === "error" ? <XCircle size={16}/> : <CheckCircle2 size={16}/>}{toast.msg}
         </div>
       )}
 
@@ -479,7 +485,7 @@ export default function Fines() {
           <p style={{ margin:"4px 0 0", fontSize:13, color:"#888" }}>
             {fines.length} total records
             {overdueFines.length > 0 && (
-              <span style={{ color:"#dc2626", fontWeight:700 }}> · {overdueFines.length} overdue ⚠</span>
+              <span style={{ color:"#dc2626", fontWeight:700 }}> · {overdueFines.length} overdue</span>
             )}
           </p>
         </div>
@@ -493,12 +499,12 @@ export default function Fines() {
 
       {/* ── KPI Cards */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))", gap:12, marginBottom:20 }}>
-        <KPICard icon="⚠️"  label="Total Issued"     value={`UGX ${fmt(totalFines)}`}  sub={`${fines.length} fines`}                accent="#800020" />
-        <KPICard icon="❌"  label="Unpaid"            value={`UGX ${fmt(totalUnpaid)}`} sub={`${unpaidFines.length} outstanding`}    accent="#dc2626" />
-        <KPICard icon="✅"  label="Collected"         value={`UGX ${fmt(totalPaid)}`}   sub={`${paidFines.length} paid`}             accent="#15803d" />
-        <KPICard icon="📊" label="Collection Rate"   value={`${collRate}%`}             sub="of total fines collected"              accent={collRate >= 70 ? "#15803d" : "#ca8a04"} />
-        <KPICard icon="🕐" label="Overdue"           value={overdueFines.length}        sub="unpaid past due date"                  accent="#dc2626" />
-        <KPICard icon="🤝" label="Waived"            value={waivedFines.length}         sub={`UGX ${fmt(waivedFines.reduce((a,f)=>a+Number(f.amount),0))}`} accent="#6b7280" />
+        <KPICard Icon={AlertTriangle} label="Total Issued"     value={`UGX ${fmt(totalFines)}`}  sub={`${fines.length} fines`}                accent="#800020" />
+        <KPICard Icon={XCircle}       label="Unpaid"            value={`UGX ${fmt(totalUnpaid)}`} sub={`${unpaidFines.length} outstanding`}    accent="#dc2626" />
+        <KPICard Icon={CheckCircle2}  label="Collected"         value={`UGX ${fmt(totalPaid)}`}   sub={`${paidFines.length} paid`}             accent="#15803d" />
+        <KPICard Icon={BarChart3}     label="Collection Rate"   value={`${collRate}%`}             sub="of total fines collected"              accent={collRate >= 70 ? "#15803d" : "#ca8a04"} />
+        <KPICard Icon={Clock}         label="Overdue"           value={overdueFines.length}        sub="unpaid past due date"                  accent="#dc2626" />
+        <KPICard Icon={HandHeart}     label="Waived"            value={waivedFines.length}         sub={`UGX ${fmt(waivedFines.reduce((a,f)=>a+Number(f.amount),0))}`} accent="#6b7280" />
       </div>
 
       {/* ── Collection progress bar */}
@@ -535,7 +541,7 @@ export default function Fines() {
         display:"flex", gap:10, flexWrap:"wrap", alignItems:"center",
       }}>
         <div style={{ position:"relative", flex:"1 1 200px" }}>
-          <span style={{ position:"absolute", left:10, top:"50%", transform:"translateY(-50%)", color:"#aaa" }}>🔍</span>
+          <Search size={15} style={{ position:"absolute", left:10, top:"50%", transform:"translateY(-50%)", color:"#aaa" }}/>
           <input placeholder="Search member, reason, notes…" value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
             style={{ ...inp, paddingLeft:32 }} />
@@ -566,8 +572,8 @@ export default function Fines() {
 
         {(search || statusFilter !== "all" || reasonFilter !== "all" || overdueOnly || dateFrom || dateTo) && (
           <button onClick={() => { setSearch(""); setStatusFilter("all"); setReasonFilter("all"); setOverdueOnly(false); setDateFrom(""); setDateTo(""); setPage(1); }}
-            style={{ background:"#fee2e2", color:"#dc2626", border:"none", borderRadius:6, padding:"8px 12px", cursor:"pointer", fontSize:12, fontWeight:700 }}>
-            ✕ Clear
+            style={{ background:"#fee2e2", color:"#dc2626", border:"none", borderRadius:6, padding:"8px 12px", cursor:"pointer", fontSize:12, fontWeight:700, display:"flex", alignItems:"center", gap:4 }}>
+            <X size={13}/> Clear
           </button>
         )}
 
@@ -585,7 +591,7 @@ export default function Fines() {
           </div>
         ) : paginated.length === 0 ? (
           <div style={{ padding:"52px 20px", textAlign:"center" }}>
-            <div style={{ fontSize:42, marginBottom:10 }}>📭</div>
+            <Inbox size={42} style={{marginBottom:10,opacity:0.3,color:"#800020"}}/>
             <p style={{ color:"#888", margin:0, fontSize:15 }}>No fines match your search.</p>
           </div>
         ) : (
@@ -633,18 +639,18 @@ export default function Fines() {
                       <td style={{ padding:"11px 14px" }}>
                         <div style={{ display:"flex", gap:6 }}>
                           <button onClick={() => setViewFine(f)} title="View"
-                            style={{ background:"#f5f0f1", border:"none", borderRadius:6, padding:"5px 10px", cursor:"pointer", fontSize:13 }}>👁</button>
+                            style={{ background:"#f5f0f1", border:"none", borderRadius:6, padding:"5px 9px", cursor:"pointer", display:"flex", alignItems:"center", color:"#555" }}><Eye size={13}/></button>
                           {isAdmin && f.fine_status !== "paid" && f.fine_status !== "waived" && (
                             <button onClick={() => setMarkPaidFine(f)} title="Update status"
-                              style={{ background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:6, padding:"5px 10px", cursor:"pointer", fontSize:13 }}>✓</button>
+                              style={{ background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:6, padding:"5px 9px", cursor:"pointer", display:"flex", alignItems:"center", color:"#15803d" }}><CheckCircle2 size={13}/></button>
                           )}
                           {isAdmin && (
                             <button onClick={() => setEditFine(f)} title="Edit"
-                              style={{ background:"#fff5f7", border:"1px solid #f9c0c0", borderRadius:6, padding:"5px 10px", cursor:"pointer", fontSize:13 }}>✏️</button>
+                              style={{ background:"#fff5f7", border:"1px solid #f9c0c0", borderRadius:6, padding:"5px 9px", cursor:"pointer", display:"flex", alignItems:"center", color:"#800020" }}><Pencil size={13}/></button>
                           )}
                           {isAdmin && (
                             <button onClick={() => setConfirmDelete(f)} title="Delete"
-                              style={{ background:"#fff5f5", border:"1px solid #fca5a5", borderRadius:6, padding:"5px 10px", cursor:"pointer", fontSize:13 }}>🗑</button>
+                              style={{ background:"#fff5f5", border:"1px solid #fca5a5", borderRadius:6, padding:"5px 9px", cursor:"pointer", display:"flex", alignItems:"center", color:"#dc2626" }}><Trash2 size={13}/></button>
                           )}
                         </div>
                       </td>
@@ -679,7 +685,7 @@ export default function Fines() {
             </span>
             <div style={{ display:"flex", gap:6 }}>
               <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
-                style={{ padding:"6px 14px",borderRadius:6,border:"1px solid #e5e7eb",background:"#fff",cursor:page===1?"not-allowed":"pointer",color:page===1?"#ccc":"#111",fontWeight:600,fontSize:13 }}>← Prev</button>
+                style={{ padding:"6px 14px",borderRadius:6,border:"1px solid #e5e7eb",background:"#fff",cursor:page===1?"not-allowed":"pointer",color:page===1?"#ccc":"#111",fontWeight:600,fontSize:13,display:"flex",alignItems:"center",gap:4 }}><ChevronLeft size={14}/>Prev</button>
               {Array.from({length:totalPages},(_,i)=>i+1)
                 .filter(p=>p===1||p===totalPages||Math.abs(p-page)<=1)
                 .reduce((acc,p,i,arr)=>{ if(i>0&&p-arr[i-1]>1)acc.push("..."); acc.push(p); return acc; },[])
@@ -688,7 +694,7 @@ export default function Fines() {
                   :<button key={p} onClick={()=>setPage(p)} style={{padding:"6px 12px",borderRadius:6,border:"1px solid",borderColor:page===p?"#800020":"#e5e7eb",background:page===p?"#800020":"#fff",color:page===p?"#fff":"#111",fontWeight:700,cursor:"pointer",fontSize:13}}>{p}</button>
                 )}
               <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
-                style={{ padding:"6px 14px",borderRadius:6,border:"1px solid #e5e7eb",background:"#fff",cursor:page===totalPages?"not-allowed":"pointer",color:page===totalPages?"#ccc":"#111",fontWeight:600,fontSize:13 }}>Next →</button>
+                style={{ padding:"6px 14px",borderRadius:6,border:"1px solid #e5e7eb",background:"#fff",cursor:page===totalPages?"not-allowed":"pointer",color:page===totalPages?"#ccc":"#111",fontWeight:600,fontSize:13,display:"flex",alignItems:"center",gap:4 }}>Next<ChevronRight size={14}/></button>
             </div>
           </div>
         )}
@@ -736,7 +742,7 @@ export default function Fines() {
       {confirmDelete && (
         <Modal title="Delete Fine" onClose={() => setConfirmDelete(null)}>
           <div style={{ textAlign:"center", padding:"8px 0 16px" }}>
-            <div style={{ fontSize:44, marginBottom:12 }}>⚠️</div>
+            <AlertTriangle size={40} color="#dc2626" style={{marginBottom:12}}/>
             <p style={{ fontSize:16, color:"#111", fontWeight:600, margin:"0 0 6px" }}>Delete this fine?</p>
             <p style={{ fontSize:14, color:"#800020", fontWeight:700, margin:"0 0 4px" }}>
               UGX {fmt(confirmDelete.amount)} — {getMemberName(confirmDelete.member_id)}

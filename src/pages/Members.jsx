@@ -1,6 +1,10 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
+import {
+  Pencil, Eye, Trash2, Search, AlertTriangle, CheckCircle2, XCircle,
+  ChevronLeft, ChevronRight,
+} from "lucide-react";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const GENDER_OPTIONS = ["Male", "Female", "Other"];
@@ -274,8 +278,9 @@ function ViewMember({ member, packageName, onClose, onEdit, isAdmin }) {
           <button onClick={onEdit} style={{
             background: "#800020", color: "#fff", border: "none",
             borderRadius: 8, padding: "10px 22px", fontWeight: 700, cursor: "pointer", fontSize: 14,
+            display:"flex", alignItems:"center", gap:8,
           }}>
-            ✏️ Edit Member
+            <Pencil size={15}/> Edit Member
           </button>
         </div>
       )}
@@ -399,9 +404,9 @@ export default function Members() {
           color: "#fff", padding: "12px 20px", borderRadius: 10,
           fontWeight: 600, fontSize: 14,
           boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-          animation: "slideIn 0.3s ease",
+          animation: "slideIn 0.3s ease", display:"flex", alignItems:"center", gap:8,
         }}>
-          {toast.type === "error" ? "⚠ " : "✓ "}{toast.msg}
+          {toast.type === "error" ? <XCircle size={16}/> : <CheckCircle2 size={16}/>}{toast.msg}
         </div>
       )}
 
@@ -460,7 +465,7 @@ export default function Members() {
       }}>
         {/* Search */}
         <div style={{ position: "relative", flex: "1 1 220px" }}>
-          <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#aaa", fontSize: 15 }}>🔍</span>
+          <Search size={15} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#aaa" }}/>
           <input
             placeholder="Search by name, number, contact, email…"
             value={search}
@@ -502,7 +507,7 @@ export default function Members() {
           </div>
         ) : paginated.length === 0 ? (
           <div style={{ padding: "48px 20px", textAlign: "center" }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
+            <Search size={36} style={{marginBottom:12,opacity:0.3,color:"#800020"}}/>
             <p style={{ color: "#888", margin: 0, fontSize: 15 }}>No members match your search.</p>
           </div>
         ) : (
@@ -549,23 +554,23 @@ export default function Members() {
                         <button
                           onClick={() => setViewMember(m)}
                           title="View profile"
-                          style={{ background: "#f0f0f0", border: "none", borderRadius: 6, padding: "5px 10px", cursor: "pointer", fontSize: 13 }}
-                        >👁</button>
+                          style={{ background: "#f0f0f0", border: "none", borderRadius: 6, padding: "5px 9px", cursor: "pointer", display:"flex", alignItems:"center", color:"#555" }}
+                        ><Eye size={13}/></button>
                         {/* Edit (admin only) */}
                         {isAdmin && (
                           <button
                             onClick={() => setEditMember(m)}
                             title="Edit member"
-                            style={{ background: "#fff5f7", border: "1px solid #f9c0c0", borderRadius: 6, padding: "5px 10px", cursor: "pointer", fontSize: 13 }}
-                          >✏️</button>
+                            style={{ background: "#fff5f7", border: "1px solid #f9c0c0", borderRadius: 6, padding: "5px 9px", cursor: "pointer", display:"flex", alignItems:"center", color:"#800020" }}
+                          ><Pencil size={13}/></button>
                         )}
                         {/* Delete (admin only) */}
                         {isAdmin && (
                           <button
                             onClick={() => setConfirmDelete(m)}
                             title="Delete member"
-                            style={{ background: "#fff5f5", border: "1px solid #fca5a5", borderRadius: 6, padding: "5px 10px", cursor: "pointer", fontSize: 13 }}
-                          >🗑</button>
+                            style={{ background: "#fff5f5", border: "1px solid #fca5a5", borderRadius: 6, padding: "5px 9px", cursor: "pointer", display:"flex", alignItems:"center", color:"#dc2626" }}
+                          ><Trash2 size={13}/></button>
                         )}
                       </div>
                     </td>
@@ -588,8 +593,8 @@ export default function Members() {
             <div style={{ display: "flex", gap: 6 }}>
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid #e5e7eb", background: "#fff", cursor: page === 1 ? "not-allowed" : "pointer", color: page === 1 ? "#ccc" : "#111", fontWeight: 600, fontSize: 13 }}
-              >← Prev</button>
+                style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid #e5e7eb", background: "#fff", cursor: page === 1 ? "not-allowed" : "pointer", color: page === 1 ? "#ccc" : "#111", fontWeight: 600, fontSize: 13, display:"flex", alignItems:"center", gap:4 }}
+              ><ChevronLeft size={14}/>Prev</button>
               {Array.from({ length: totalPages }, (_, i) => i + 1)
                 .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
                 .reduce((acc, p, i, arr) => {
@@ -609,8 +614,8 @@ export default function Members() {
                 ))}
               <button
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid #e5e7eb", background: "#fff", cursor: page === totalPages ? "not-allowed" : "pointer", color: page === totalPages ? "#ccc" : "#111", fontWeight: 600, fontSize: 13 }}
-              >Next →</button>
+                style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid #e5e7eb", background: "#fff", cursor: page === totalPages ? "not-allowed" : "pointer", color: page === totalPages ? "#ccc" : "#111", fontWeight: 600, fontSize: 13, display:"flex", alignItems:"center", gap:4 }}
+              >Next<ChevronRight size={14}/></button>
             </div>
           </div>
         )}
@@ -651,7 +656,7 @@ export default function Members() {
       {confirmDelete && (
         <Modal title="Delete Member" onClose={() => setConfirmDelete(null)}>
           <div style={{ textAlign: "center", padding: "8px 0 16px" }}>
-            <div style={{ fontSize: 44, marginBottom: 12 }}>⚠️</div>
+            <AlertTriangle size={40} color="#dc2626" style={{marginBottom:12}}/>
             <p style={{ fontSize: 16, color: "#111", fontWeight: 600, margin: "0 0 6px" }}>
               Delete <strong>{confirmDelete.full_name}</strong>?
             </p>
