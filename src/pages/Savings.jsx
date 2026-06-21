@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
+import {
+  Wallet, ArrowDownToLine, ArrowUpFromLine, CalendarDays, CheckCircle2,
+  XCircle, Search, X, Inbox, Eye, Pencil, Trash2, ChevronLeft, ChevronRight,
+  AlertTriangle,
+} from "lucide-react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const TRANSACTION_TYPES = ["deposit", "withdrawal", "interest", "bonus", "correction"];
@@ -33,7 +38,7 @@ function Badge({ text, type }) {
 }
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
-function KPICard({ icon, label, value, sub, accent }) {
+function KPICard({ Icon, label, value, sub, accent }) {
   return (
     <div style={{
       background: "#fff", borderRadius: 12, padding: "16px 18px",
@@ -44,8 +49,8 @@ function KPICard({ icon, label, value, sub, accent }) {
         width: 44, height: 44, borderRadius: 10,
         background: `${accent}18`,
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 22, flexShrink: 0,
-      }}>{icon}</div>
+        flexShrink: 0, color: accent,
+      }}><Icon size={22}/></div>
       <div>
         <div style={{ fontSize: 11, color: "#888", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>{label}</div>
         <div style={{ fontSize: 20, fontWeight: 800, color: "#111", fontFamily: "Georgia, serif" }}>{value}</div>
@@ -168,8 +173,8 @@ function SavingsForm({ initial = EMPTY, members = [], packages = [], onSave, onC
             style={{ ...inp, background: "#f3f4f6", color: autoPackage ? "#800020" : "#aaa", fontWeight: autoPackage ? 700 : 400, cursor: "not-allowed" }}
           />
           {autoPackage && (
-            <span style={{ fontSize: 11, color: "#15803d", fontWeight: 600 }}>
-              ✓ Auto-filled from member profile
+            <span style={{ fontSize: 11, color: "#15803d", fontWeight: 600, display:"flex", alignItems:"center", gap:4 }}>
+              <CheckCircle2 size={12}/> Auto-filled from member profile
             </span>
           )}
           {errors.saving_package_id && <span style={{ fontSize: 11, color: "#dc2626" }}>{errors.saving_package_id}</span>}
@@ -270,7 +275,7 @@ function ViewRecord({ record, memberName, packageName, onClose, onEdit, isAdmin 
             Record #{record.id}
           </div>
         </div>
-        <div style={{ fontSize: 44, opacity: 0.25 }}>💰</div>
+        <Wallet size={36} style={{opacity:0.3,color:"#fff"}}/>
       </div>
 
       {/* Details */}
@@ -288,7 +293,8 @@ function ViewRecord({ record, memberName, packageName, onClose, onEdit, isAdmin 
           <button onClick={onEdit} style={{
             background: "#800020", color: "#fff", border: "none",
             borderRadius: 8, padding: "10px 22px", fontWeight: 700, cursor: "pointer", fontSize: 14,
-          }}>✏️ Edit Record</button>
+            display:"flex", alignItems:"center", gap:8,
+          }}><Pencil size={15}/>Edit Record</button>
         </div>
       )}
     </Modal>
@@ -431,9 +437,9 @@ export default function Savings() {
           background: toast.type === "error" ? "#dc2626" : "#15803d",
           color: "#fff", padding: "12px 20px", borderRadius: 10,
           fontWeight: 600, fontSize: 14, boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-          animation: "slideIn 0.3s ease",
+          animation: "slideIn 0.3s ease", display:"flex", alignItems:"center", gap:8,
         }}>
-          {toast.type === "error" ? "⚠ " : "✓ "}{toast.msg}
+          {toast.type === "error" ? <XCircle size={16}/> : <CheckCircle2 size={16}/>}{toast.msg}
         </div>
       )}
 
@@ -465,10 +471,10 @@ export default function Savings() {
 
       {/* ── KPI Cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 20 }}>
-        <KPICard icon="💰" label="Net Balance"     value={`UGX ${fmt(netBalance)}`}       sub="Deposits minus withdrawals" accent="#800020" />
-        <KPICard icon="📥" label="Total Deposits"  value={`UGX ${fmt(totalDeposits)}`}    sub={`${savings.filter(s=>s.transaction_type!=="withdrawal").length} transactions`} accent="#15803d" />
-        <KPICard icon="📤" label="Total Withdrawn" value={`UGX ${fmt(totalWithdrawals)}`} sub={`${savings.filter(s=>s.transaction_type==="withdrawal").length} transactions`} accent="#dc2626" />
-        <KPICard icon="📅" label="Today's Activity" value={`UGX ${fmt(todayTotal)}`}      sub="Recorded today" accent="#1d4ed8" />
+        <KPICard Icon={Wallet}          label="Net Balance"     value={`UGX ${fmt(netBalance)}`}       sub="Deposits minus withdrawals" accent="#800020" />
+        <KPICard Icon={ArrowDownToLine} label="Total Deposits"  value={`UGX ${fmt(totalDeposits)}`}    sub={`${savings.filter(s=>s.transaction_type!=="withdrawal").length} transactions`} accent="#15803d" />
+        <KPICard Icon={ArrowUpFromLine} label="Total Withdrawn" value={`UGX ${fmt(totalWithdrawals)}`} sub={`${savings.filter(s=>s.transaction_type==="withdrawal").length} transactions`} accent="#dc2626" />
+        <KPICard Icon={CalendarDays}    label="Today's Activity" value={`UGX ${fmt(todayTotal)}`}      sub="Recorded today" accent="#1d4ed8" />
       </div>
 
       {/* ── Filters */}
@@ -479,7 +485,7 @@ export default function Savings() {
       }}>
         {/* Search */}
         <div style={{ position: "relative", flex: "1 1 220px" }}>
-          <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#aaa" }}>🔍</span>
+          <Search size={15} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#aaa" }}/>
           <input placeholder="Search member, reference, notes…" value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
             style={{ ...inp, paddingLeft: 32 }} />
@@ -504,8 +510,8 @@ export default function Savings() {
 
         {(search || typeFilter !== "all" || methodFilter !== "all" || dateFrom || dateTo) && (
           <button onClick={() => { setSearch(""); setTypeFilter("all"); setMethodFilter("all"); setDateFrom(""); setDateTo(""); setPage(1); }}
-            style={{ background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: 6, padding: "8px 12px", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>
-            ✕ Clear
+            style={{ background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: 6, padding: "8px 12px", cursor: "pointer", fontSize: 12, fontWeight: 700, display:"flex", alignItems:"center", gap:4 }}>
+            <X size={13}/> Clear
           </button>
         )}
 
@@ -523,7 +529,7 @@ export default function Savings() {
           </div>
         ) : paginated.length === 0 ? (
           <div style={{ padding: "52px 20px", textAlign: "center" }}>
-            <div style={{ fontSize: 42, marginBottom: 10 }}>📭</div>
+            <Inbox size={42} style={{marginBottom:10,opacity:0.3,color:"#800020"}}/>
             <p style={{ color: "#888", margin: 0, fontSize: 15 }}>No records match your search.</p>
           </div>
         ) : (
@@ -571,19 +577,19 @@ export default function Savings() {
                       <td style={{ padding: "11px 14px" }}>
                         <div style={{ display: "flex", gap: 6 }}>
                           <button onClick={() => setViewRecord(s)} title="View"
-                            style={{ background: "#f5f0f1", border: "none", borderRadius: 6, padding: "5px 10px", cursor: "pointer", fontSize: 13 }}>
-                            👁
+                            style={{ background: "#f5f0f1", border: "none", borderRadius: 6, padding: "5px 9px", cursor: "pointer", display:"flex", alignItems:"center", color:"#555" }}>
+                            <Eye size={13}/>
                           </button>
                           {isAdmin && (
                             <button onClick={() => setEditRecord(s)} title="Edit"
-                              style={{ background: "#fff5f7", border: "1px solid #f9c0c0", borderRadius: 6, padding: "5px 10px", cursor: "pointer", fontSize: 13 }}>
-                              ✏️
+                              style={{ background: "#fff5f7", border: "1px solid #f9c0c0", borderRadius: 6, padding: "5px 9px", cursor: "pointer", display:"flex", alignItems:"center", color:"#800020" }}>
+                              <Pencil size={13}/>
                             </button>
                           )}
                           {isAdmin && (
                             <button onClick={() => setConfirmDelete(s)} title="Delete"
-                              style={{ background: "#fff5f5", border: "1px solid #fca5a5", borderRadius: 6, padding: "5px 10px", cursor: "pointer", fontSize: 13 }}>
-                              🗑
+                              style={{ background: "#fff5f5", border: "1px solid #fca5a5", borderRadius: 6, padding: "5px 9px", cursor: "pointer", display:"flex", alignItems:"center", color:"#dc2626" }}>
+                              <Trash2 size={13}/>
                             </button>
                           )}
                         </div>
@@ -622,8 +628,8 @@ export default function Savings() {
             </span>
             <div style={{ display: "flex", gap: 6 }}>
               <button onClick={() => setPage(p => Math.max(1,p-1))} disabled={page===1}
-                style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid #e5e7eb", background: "#fff", cursor: page===1?"not-allowed":"pointer", color: page===1?"#ccc":"#111", fontWeight: 600, fontSize: 13 }}>
-                ← Prev
+                style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid #e5e7eb", background: "#fff", cursor: page===1?"not-allowed":"pointer", color: page===1?"#ccc":"#111", fontWeight: 600, fontSize: 13, display:"flex", alignItems:"center", gap:4 }}>
+                <ChevronLeft size={14}/>Prev
               </button>
               {Array.from({ length: totalPages }, (_,i)=>i+1)
                 .filter(p => p===1||p===totalPages||Math.abs(p-page)<=1)
@@ -639,8 +645,8 @@ export default function Savings() {
                     }}>{p}</button>
                 )}
               <button onClick={() => setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
-                style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid #e5e7eb", background: "#fff", cursor: page===totalPages?"not-allowed":"pointer", color: page===totalPages?"#ccc":"#111", fontWeight: 600, fontSize: 13 }}>
-                Next →
+                style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid #e5e7eb", background: "#fff", cursor: page===totalPages?"not-allowed":"pointer", color: page===totalPages?"#ccc":"#111", fontWeight: 600, fontSize: 13, display:"flex", alignItems:"center", gap:4 }}>
+                Next<ChevronRight size={14}/>
               </button>
             </div>
           </div>
@@ -678,7 +684,7 @@ export default function Savings() {
       {confirmDelete && (
         <Modal title="Delete Record" onClose={() => setConfirmDelete(null)}>
           <div style={{ textAlign: "center", padding: "8px 0 16px" }}>
-            <div style={{ fontSize: 44, marginBottom: 12 }}>⚠️</div>
+            <AlertTriangle size={40} color="#dc2626" style={{marginBottom:12}}/>
             <p style={{ fontSize: 16, color: "#111", fontWeight: 600, margin: "0 0 6px" }}>
               Delete this savings record?
             </p>

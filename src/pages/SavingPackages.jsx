@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
+import {
+  Package, Users, Wallet, ArrowUp, ArrowDown, Eye, Pencil, Trash2,
+  Search, X, LayoutGrid, List, AlertTriangle, CheckCircle2, XCircle,
+} from "lucide-react";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmt = (n) => new Intl.NumberFormat("en-UG").format(Math.round(Number(n) || 0));
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
-function KPICard({ icon, label, value, sub, accent }) {
+function KPICard({ Icon, label, value, sub, accent }) {
   return (
     <div style={{
       background: "#fff", borderRadius: 12, padding: "16px 18px",
@@ -16,8 +20,8 @@ function KPICard({ icon, label, value, sub, accent }) {
       <div style={{
         width: 44, height: 44, borderRadius: 10, background: `${accent}18`,
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 22, flexShrink: 0,
-      }}>{icon}</div>
+        flexShrink: 0, color: accent,
+      }}><Icon size={22}/></div>
       <div>
         <div style={{ fontSize: 11, color: "#888", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>{label}</div>
         <div style={{ fontSize: 20, fontWeight: 800, color: "#111", fontFamily: "Georgia, serif" }}>{value}</div>
@@ -206,17 +210,20 @@ function PackageCard({ pkg, memberCount, totalSavings, onView, onEdit, onDelete,
         <button onClick={onView} style={{
           flex: 1, padding: "8px", borderRadius: 7, border: "1px solid #e5e7eb",
           background: "#fff", color: "#555", fontWeight: 600, cursor: "pointer", fontSize: 13,
-        }}>👁 View</button>
+          display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+        }}><Eye size={14}/> View</button>
         {isAdmin && (
           <>
             <button onClick={onEdit} style={{
               flex: 1, padding: "8px", borderRadius: 7, border: "1px solid #f9c0c0",
               background: "#fff5f7", color: "#800020", fontWeight: 600, cursor: "pointer", fontSize: 13,
-            }}>✏️ Edit</button>
+              display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+            }}><Pencil size={14}/> Edit</button>
             <button onClick={onDelete} style={{
               padding: "8px 12px", borderRadius: 7, border: "1px solid #fca5a5",
               background: "#fff5f5", color: "#dc2626", fontWeight: 600, cursor: "pointer", fontSize: 13,
-            }}>🗑</button>
+              display:"flex", alignItems:"center",
+            }}><Trash2 size={14}/></button>
           </>
         )}
       </div>
@@ -241,7 +248,7 @@ function ViewPackage({ pkg, memberCount, totalSavings, membersOnPackage, onClose
             Minimum: UGX {fmt(pkg.minimum_saving)}
           </div>
         </div>
-        <div style={{ fontSize: 40, opacity: 0.2 }}>📦</div>
+        <Package size={34} style={{opacity:0.3,color:"#fff"}}/>
       </div>
 
       {/* Stats */}
@@ -289,7 +296,8 @@ function ViewPackage({ pkg, memberCount, totalSavings, membersOnPackage, onClose
           <button onClick={onEdit} style={{
             padding: "10px 22px", borderRadius: 8, border: "none",
             background: "#800020", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 14,
-          }}>✏️ Edit Package</button>
+            display:"flex", alignItems:"center", gap:8,
+          }}><Pencil size={15}/>Edit Package</button>
         </div>
       )}
     </Modal>
@@ -410,9 +418,9 @@ export default function SavingPackages() {
           background: toast.type === "error" ? "#dc2626" : "#15803d",
           color: "#fff", padding: "12px 20px", borderRadius: 10,
           fontWeight: 600, fontSize: 14, boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-          animation: "slideIn 0.3s ease",
+          animation: "slideIn 0.3s ease", display:"flex", alignItems:"center", gap:8,
         }}>
-          {toast.type === "error" ? "⚠ " : "✓ "}{toast.msg}
+          {toast.type === "error" ? <XCircle size={16}/> : <CheckCircle2 size={16}/>}{toast.msg}
         </div>
       )}
 
@@ -434,13 +442,17 @@ export default function SavingPackages() {
         <div style={{ display:"flex", gap:8 }}>
           {/* View toggle */}
           <div style={{ display:"flex", border:"1.5px solid #e5e7eb", borderRadius:8, overflow:"hidden" }}>
-            {["grid","table"].map(mode => (
-              <button key={mode} onClick={() => setViewMode(mode)} style={{
-                padding:"8px 14px", border:"none", cursor:"pointer", fontSize:13, fontWeight:600,
-                background: viewMode === mode ? "#800020" : "#fff",
-                color: viewMode === mode ? "#fff" : "#666",
-              }}>{mode === "grid" ? "⊞ Grid" : "☰ Table"}</button>
-            ))}
+            {["grid","table"].map(mode => {
+              const ModeIcon = mode === "grid" ? LayoutGrid : List;
+              return (
+                <button key={mode} onClick={() => setViewMode(mode)} style={{
+                  padding:"8px 14px", border:"none", cursor:"pointer", fontSize:13, fontWeight:600,
+                  background: viewMode === mode ? "#800020" : "#fff",
+                  color: viewMode === mode ? "#fff" : "#666",
+                  display:"flex", alignItems:"center", gap:6,
+                }}><ModeIcon size={14}/>{mode === "grid" ? "Grid" : "Table"}</button>
+              );
+            })}
           </div>
           {isAdmin && (
             <button onClick={() => setShowAdd(true)} style={{
@@ -453,11 +465,11 @@ export default function SavingPackages() {
 
       {/* ── KPI Cards */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))", gap:12, marginBottom:20 }}>
-        <KPICard icon="📦" label="Total Packages"   value={totalPackages}              sub="saving tiers"                  accent="#800020" />
-        <KPICard icon="👥" label="Total Enrolled"   value={totalEnrolled}              sub="members across all packages"   accent="#2563eb" />
-        <KPICard icon="💰" label="Total Savings"    value={`UGX ${fmt(totalSavingsAll)}`} sub="across all packages"        accent="#15803d" />
-        <KPICard icon="⬆️" label="Highest Minimum" value={`UGX ${fmt(highestMin)}`}   sub="most premium package"          accent="#7e22ce" />
-        <KPICard icon="⬇️" label="Lowest Minimum"  value={`UGX ${fmt(lowestMin)}`}    sub="entry-level package"           accent="#ca8a04" />
+        <KPICard Icon={Package} label="Total Packages"   value={totalPackages}              sub="saving tiers"                  accent="#800020" />
+        <KPICard Icon={Users}   label="Total Enrolled"   value={totalEnrolled}              sub="members across all packages"   accent="#2563eb" />
+        <KPICard Icon={Wallet}  label="Total Savings"    value={`UGX ${fmt(totalSavingsAll)}`} sub="across all packages"        accent="#15803d" />
+        <KPICard Icon={ArrowUp} label="Highest Minimum" value={`UGX ${fmt(highestMin)}`}   sub="most premium package"          accent="#7e22ce" />
+        <KPICard Icon={ArrowDown} label="Lowest Minimum"  value={`UGX ${fmt(lowestMin)}`}    sub="entry-level package"           accent="#ca8a04" />
       </div>
 
       {/* ── Search */}
@@ -467,15 +479,15 @@ export default function SavingPackages() {
         display:"flex", gap:10, alignItems:"center",
       }}>
         <div style={{ position:"relative", flex:1 }}>
-          <span style={{ position:"absolute", left:10, top:"50%", transform:"translateY(-50%)", color:"#aaa" }}>🔍</span>
+          <Search size={15} style={{ position:"absolute", left:10, top:"50%", transform:"translateY(-50%)", color:"#aaa" }}/>
           <input placeholder="Search packages by name or description…" value={search}
             onChange={e => setSearch(e.target.value)}
             style={{ ...inp, paddingLeft:32 }} />
         </div>
         {search && (
           <button onClick={() => setSearch("")}
-            style={{ background:"#fee2e2", color:"#dc2626", border:"none", borderRadius:6, padding:"8px 12px", cursor:"pointer", fontSize:12, fontWeight:700 }}>
-            ✕ Clear
+            style={{ background:"#fee2e2", color:"#dc2626", border:"none", borderRadius:6, padding:"8px 12px", cursor:"pointer", fontSize:12, fontWeight:700, display:"flex", alignItems:"center", gap:4 }}>
+            <X size={13}/> Clear
           </button>
         )}
         <span style={{ fontSize:13, color:"#888", whiteSpace:"nowrap" }}>
@@ -491,7 +503,7 @@ export default function SavingPackages() {
         </div>
       ) : filtered.length === 0 ? (
         <div style={{ padding:"52px 20px", textAlign:"center", background:"#fff", borderRadius:12 }}>
-          <div style={{ fontSize:42, marginBottom:10 }}>📦</div>
+          <Package size={42} style={{marginBottom:10,opacity:0.3,color:"#800020"}}/>
           <p style={{ color:"#888", margin:0, fontSize:15 }}>No packages found.</p>
           {isAdmin && <button onClick={() => setShowAdd(true)} style={{ marginTop:16, background:"#800020", color:"#fff", border:"none", borderRadius:8, padding:"10px 20px", fontWeight:700, cursor:"pointer", fontSize:14 }}>+ Create First Package</button>}
         </div>
@@ -556,14 +568,14 @@ export default function SavingPackages() {
                     <td style={{ padding:"11px 14px" }}>
                       <div style={{ display:"flex", gap:6 }}>
                         <button onClick={() => setViewPkg(pkg)} title="View"
-                          style={{ background:"#f5f0f1", border:"none", borderRadius:6, padding:"5px 10px", cursor:"pointer", fontSize:13 }}>👁</button>
+                          style={{ background:"#f5f0f1", border:"none", borderRadius:6, padding:"5px 9px", cursor:"pointer", display:"flex", alignItems:"center", color:"#555" }}><Eye size={13}/></button>
                         {isAdmin && (
                           <button onClick={() => setEditPkg(pkg)} title="Edit"
-                            style={{ background:"#fff5f7", border:"1px solid #f9c0c0", borderRadius:6, padding:"5px 10px", cursor:"pointer", fontSize:13 }}>✏️</button>
+                            style={{ background:"#fff5f7", border:"1px solid #f9c0c0", borderRadius:6, padding:"5px 9px", cursor:"pointer", display:"flex", alignItems:"center", color:"#800020" }}><Pencil size={13}/></button>
                         )}
                         {isAdmin && (
                           <button onClick={() => setConfirmDelete(pkg)} title="Delete"
-                            style={{ background:"#fff5f5", border:"1px solid #fca5a5", borderRadius:6, padding:"5px 10px", cursor:"pointer", fontSize:13 }}>🗑</button>
+                            style={{ background:"#fff5f5", border:"1px solid #fca5a5", borderRadius:6, padding:"5px 9px", cursor:"pointer", display:"flex", alignItems:"center", color:"#dc2626" }}><Trash2 size={13}/></button>
                         )}
                       </div>
                     </td>
@@ -611,13 +623,13 @@ export default function SavingPackages() {
       {confirmDelete && (
         <Modal title="Delete Package" onClose={() => setConfirmDelete(null)}>
           <div style={{ textAlign:"center", padding:"8px 0 16px" }}>
-            <div style={{ fontSize:44, marginBottom:12 }}>⚠️</div>
+            <AlertTriangle size={40} color="#dc2626" style={{marginBottom:12}}/>
             <p style={{ fontSize:16, color:"#111", fontWeight:600, margin:"0 0 6px" }}>
               Delete <strong>{confirmDelete.package_name}</strong>?
             </p>
             {getMemberCount(confirmDelete.id) > 0 ? (
-              <p style={{ fontSize:13, color:"#dc2626", fontWeight:600, margin:"0 0 20px" }}>
-                ⚠ {getMemberCount(confirmDelete.id)} member(s) are enrolled — cannot delete.
+              <p style={{ fontSize:13, color:"#dc2626", fontWeight:600, margin:"0 0 20px", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                <AlertTriangle size={14}/> {getMemberCount(confirmDelete.id)} member(s) are enrolled — cannot delete.
               </p>
             ) : (
               <p style={{ fontSize:13, color:"#888", margin:"0 0 24px" }}>
