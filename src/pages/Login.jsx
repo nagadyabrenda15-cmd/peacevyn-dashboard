@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff, LogIn, KeyRound, AlertTriangle } from "lucide-react";
 
 export default function Login() {
   const { signIn } = useAuth();
@@ -86,7 +87,7 @@ export default function Login() {
         {/* ── Context message */}
         {isFirstTime ? (
           <div style={S.infoBox}>
-            <span style={{fontSize:16,marginRight:8}}>👋</span>
+            <LogIn size={20} color="#800020" style={{flexShrink:0,marginTop:2}}/>
             <div>
               <div style={{fontWeight:700,color:"#800020",marginBottom:2}}>Welcome to PeaceVyn!</div>
               <div style={{fontSize:12,color:"#555",lineHeight:1.5}}>
@@ -132,16 +133,16 @@ export default function Login() {
               />
               <button
                 onClick={()=>setShowPass(s=>!s)}
-                style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#888",padding:0}}
+                style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:"#888",padding:0,display:"flex"}}
               >
-                {showPass?"🙈":"👁"}
+                {showPass ? <EyeOff size={16}/> : <Eye size={16}/>}
               </button>
             </div>
           </div>
 
           {error && (
             <div style={S.errorBox}>
-              <span style={{marginRight:6}}>⚠</span>{error}
+              <AlertTriangle size={14} style={{marginRight:6,flexShrink:0}}/>{error}
             </div>
           )}
 
@@ -151,8 +152,11 @@ export default function Login() {
             style={{...S.btn, ...(loading?S.btnDisabled:{})}}
           >
             {loading
-              ? <span>⏳ Signing in…</span>
-              : <span>{isFirstTime?"🔑 Login for the First Time":"→ Sign In"}</span>
+              ? <span>Signing in…</span>
+              : <span style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                  {isFirstTime ? <KeyRound size={16}/> : <LogIn size={16}/>}
+                  {isFirstTime ? "Login for the First Time" : "Sign In"}
+                </span>
             }
           </button>
         </div>

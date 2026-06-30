@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import {
+  Wallet, ClipboardList, AlertTriangle, HandHeart, Landmark, Users,
+  CalendarDays, ArrowDownToLine, ArrowUpFromLine, KeyRound, CheckCircle2,
+  XCircle, Settings2, Inbox, Download, Printer, ChevronRight,
+} from "lucide-react";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmt = (n) => new Intl.NumberFormat("en-UG").format(Math.round(Number(n) || 0));
@@ -57,7 +62,7 @@ function printTable(title, headers, rows, summary = []) {
 }
 
 // ─── Section Card ─────────────────────────────────────────────────────────────
-function ReportCard({ icon, title, description, color, onGenerate, loading }) {
+function ReportCard({ Icon, title, description, color, onGenerate, loading }) {
   return (
     <div style={{
       background: "#fff", borderRadius: 14,
@@ -65,7 +70,9 @@ function ReportCard({ icon, title, description, color, onGenerate, loading }) {
       border: "1px solid #f3e8ea", overflow: "hidden",
     }}>
       <div style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)`, padding: "16px 20px", display: "flex", gap: 12, alignItems: "center" }}>
-        <div style={{ fontSize: 28 }}>{icon}</div>
+        <div style={{ width:40,height:40,borderRadius:10,background:"rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",flexShrink:0 }}>
+          <Icon size={22}/>
+        </div>
         <div>
           <div style={{ color: "#fff", fontWeight: 800, fontSize: 16, fontFamily: "Georgia, serif" }}>{title}</div>
           <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 12, marginTop: 2 }}>{description}</div>
@@ -77,9 +84,9 @@ function ReportCard({ icon, title, description, color, onGenerate, loading }) {
             width: "100%", padding: "10px", borderRadius: 8,
             border: `1.5px solid ${color}`, background: "#fff",
             color: color, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer",
-            fontSize: 14, opacity: loading ? 0.6 : 1,
+            fontSize: 14, opacity: loading ? 0.6 : 1, display:"flex", alignItems:"center", justifyContent:"center", gap:8,
           }}>
-            {loading ? "Generating…" : "⚙ Generate Report"}
+            {loading ? "Generating…" : <><Settings2 size={14}/>Generate Report</>}
           </button>
         )}
       </div>
@@ -119,7 +126,7 @@ const inpStyle = {
 function ReportTable({ title, headers, rows, summary, onCSV, onPrint }) {
   if (!rows || rows.length === 0) return (
     <div style={{ textAlign: "center", padding: "32px 0", color: "#aaa" }}>
-      <div style={{ fontSize: 36, marginBottom: 8 }}>📭</div>
+      <Inbox size={36} style={{marginBottom:8,opacity:0.4}}/>
       <p style={{ margin: 0 }}>No data for this period.</p>
     </div>
   );
@@ -147,11 +154,13 @@ function ReportTable({ title, headers, rows, summary, onCSV, onPrint }) {
         <button onClick={onCSV} style={{
           background: "#15803d", color: "#fff", border: "none", borderRadius: 7,
           padding: "8px 16px", fontWeight: 700, cursor: "pointer", fontSize: 13,
-        }}>⬇ Download CSV</button>
+          display:"flex", alignItems:"center", gap:6,
+        }}><Download size={14}/>Download CSV</button>
         <button onClick={onPrint} style={{
           background: "#800020", color: "#fff", border: "none", borderRadius: 7,
           padding: "8px 16px", fontWeight: 700, cursor: "pointer", fontSize: 13,
-        }}>🖨 Print / PDF</button>
+          display:"flex", alignItems:"center", gap:6,
+        }}><Printer size={14}/>Print / PDF</button>
       </div>
 
       {/* Table */}
@@ -341,7 +350,7 @@ export default function Reports() {
       m.full_name,
       map[m.id]?.count  || 0,
       `UGX ${fmt(map[m.id]?.total || 0)}`,
-      map[m.id] ? "✓ Yes" : "✗ No",
+      map[m.id] ? "Yes" : "No",
     ]).sort((a, b) => {
       const ta = Number(String(a[3]).replace(/[^0-9]/g,""));
       const tb = Number(String(b[3]).replace(/[^0-9]/g,""));
@@ -489,14 +498,14 @@ export default function Reports() {
     const treatSubRevenue = treat.filter(t=>t.transaction_type==="subscription").reduce((a,t)=>a+Number(t.amount),0);
 
     const rows = [
-      ["💰 Savings Deposits",    savings.filter(s=>s.transaction_type!=="withdrawal").length, `UGX ${fmt(totalSavings)}`, ""],
-      ["📤 Savings Withdrawals", savings.filter(s=>s.transaction_type==="withdrawal").length,  `UGX ${fmt(totalWithdrawals)}`, ""],
-      ["📋 Loans Issued",        loans.length,  `UGX ${fmt(totalLoans)}`,     `UGX ${fmt(loansCollected)} collected`],
-      ["⚠️ Fines Issued",        fines.length,  `UGX ${fmt(totalFines)}`,     `UGX ${fmt(finesCollected)} collected`],
-      ["🤝 Welfare Fund",        (wf.data||[]).length, `UGX ${fmt(totalWelfare)}`, "Total all-time fund"],
-      ["🏦 Treat Deposits",      treat.filter(t=>t.transaction_type==="deposit").length, `UGX ${fmt(treatDeposits)}`, ""],
-      ["🏦 Treat Withdrawals",   treat.filter(t=>t.transaction_type==="withdrawal").length, `UGX ${fmt(treatWithdrawn)}`, ""],
-      ["🔑 Treat Subscriptions", treat.filter(t=>t.transaction_type==="subscription").length, `UGX ${fmt(treatSubRevenue)}`, "Committee fund"],
+      ["Savings Deposits",    savings.filter(s=>s.transaction_type!=="withdrawal").length, `UGX ${fmt(totalSavings)}`, ""],
+      ["Savings Withdrawals", savings.filter(s=>s.transaction_type==="withdrawal").length,  `UGX ${fmt(totalWithdrawals)}`, ""],
+      ["Loans Issued",        loans.length,  `UGX ${fmt(totalLoans)}`,     `UGX ${fmt(loansCollected)} collected`],
+      ["Fines Issued",        fines.length,  `UGX ${fmt(totalFines)}`,     `UGX ${fmt(finesCollected)} collected`],
+      ["Welfare Fund",        (wf.data||[]).length, `UGX ${fmt(totalWelfare)}`, "Total all-time fund"],
+      ["Treat Deposits",      treat.filter(t=>t.transaction_type==="deposit").length, `UGX ${fmt(treatDeposits)}`, ""],
+      ["Treat Withdrawals",   treat.filter(t=>t.transaction_type==="withdrawal").length, `UGX ${fmt(treatWithdrawn)}`, ""],
+      ["Treat Subscriptions", treat.filter(t=>t.transaction_type==="subscription").length, `UGX ${fmt(treatSubRevenue)}`, "Committee fund"],
     ];
 
     setMonthlyData({
@@ -515,69 +524,13 @@ export default function Reports() {
 
   // ── Report configs
   const reports = [
-    {
-      key: "savings",
-      icon: "💰", title: "Savings Report", color: "#15803d",
-      description: "All deposits, withdrawals and transactions by date range",
-      headers: ["Mem No.","Member","Amount","Type","Method","Reference","Date","Package","Notes"],
-      data: savingsData,
-      onGenerate: loadSavings,
-      filename: "peacevyn_savings_report.csv",
-    },
-    {
-      key: "loans",
-      icon: "📋", title: "Loans Report", color: "#2563eb",
-      description: "Loan issuance, repayments, balances and overdue status",
-      headers: ["Mem No.","Member","Loan Amt","Interest","Total","Paid","Balance","Status","Issue Date","Due Date","Overdue"],
-      data: loansData,
-      onGenerate: loadLoans,
-      filename: "peacevyn_loans_report.csv",
-    },
-    {
-      key: "fines",
-      icon: "⚠️", title: "Fines Report", color: "#dc2626",
-      description: "All fines issued, status and collection by date range",
-      headers: ["Mem No.","Member","Reason","Amount","Status","Issued","Due","Notes"],
-      data: finesData,
-      onGenerate: loadFines,
-      filename: "peacevyn_fines_report.csv",
-    },
-    {
-      key: "welfare",
-      icon: "🤝", title: "Welfare Report", color: "#7e22ce",
-      description: "Welfare contributions per member — all time",
-      headers: ["Mem No.","Member","# Records","Total Contributed","Contributed?"],
-      data: welfareData,
-      onGenerate: loadWelfare,
-      filename: "peacevyn_welfare_report.csv",
-    },
-    {
-      key: "treat",
-      icon: "🏦", title: "Emergency Treat Report", color: "#15803d",
-      description: "Treat deposits, withdrawals and committee subscription revenue by date range",
-      headers: ["Mem No.","Member","Account","Type","Amount","Balance After","Method","Date","Notes"],
-      data: treatData,
-      onGenerate: loadTreat,
-      filename: "peacevyn_treat_report.csv",
-    },
-    {
-      key: "members",
-      icon: "👥", title: "Members Report", color: "#800020",
-      description: "Full member list with all details and status",
-      headers: ["Mem No.","Name","Gender","Contact","Email","Address","DOB","National ID","Next of Kin","NOK Contact","Package","Status","Joined"],
-      data: membersData,
-      onGenerate: loadMembers,
-      filename: "peacevyn_members_report.csv",
-    },
-    {
-      key: "monthly",
-      icon: "📅", title: "Monthly Summary", color: "#ca8a04",
-      description: "Overview of all activity — savings, loans, fines and welfare",
-      headers: ["Category","# Records","Total Amount","Notes"],
-      data: monthlyData,
-      onGenerate: loadMonthly,
-      filename: "peacevyn_monthly_summary.csv",
-    },
+    { key:"savings", Icon:Wallet,       title:"Savings Report",          color:"#15803d", description:"All deposits, withdrawals and transactions by date range",             headers:["Mem No.","Member","Amount","Type","Method","Reference","Date","Package","Notes"],                                                          data:savingsData,  onGenerate:loadSavings,  filename:"peacevyn_savings_report.csv" },
+    { key:"loans",   Icon:ClipboardList, title:"Loans Report",             color:"#2563eb", description:"Loan issuance, repayments, balances and overdue status",              headers:["Mem No.","Member","Loan Amt","Interest","Total","Paid","Balance","Status","Issue Date","Due Date","Overdue"],                               data:loansData,    onGenerate:loadLoans,    filename:"peacevyn_loans_report.csv" },
+    { key:"fines",   Icon:AlertTriangle, title:"Fines Report",             color:"#dc2626", description:"All fines issued, status and collection by date range",               headers:["Mem No.","Member","Reason","Amount","Status","Issued","Due","Notes"],                                                                        data:finesData,    onGenerate:loadFines,    filename:"peacevyn_fines_report.csv" },
+    { key:"welfare", Icon:HandHeart,     title:"Welfare Report",           color:"#7e22ce", description:"Welfare contributions per member — all time",                         headers:["Mem No.","Member","# Records","Total Contributed","Contributed?"],                                                                           data:welfareData,  onGenerate:loadWelfare,  filename:"peacevyn_welfare_report.csv" },
+    { key:"treat",   Icon:Landmark,      title:"Emergency Treat Report",   color:"#15803d", description:"Treat deposits, withdrawals and committee subscription revenue",      headers:["Mem No.","Member","Account","Type","Amount","Balance After","Method","Date","Notes"],                                                       data:treatData,    onGenerate:loadTreat,    filename:"peacevyn_treat_report.csv" },
+    { key:"members", Icon:Users,         title:"Members Report",           color:"#800020", description:"Full member list with all details and status",                        headers:["Mem No.","Name","Gender","Contact","Email","Address","DOB","National ID","Next of Kin","NOK Contact","Package","Status","Joined"],         data:membersData,  onGenerate:loadMembers,  filename:"peacevyn_members_report.csv" },
+    { key:"monthly", Icon:CalendarDays,  title:"Monthly Summary",          color:"#ca8a04", description:"Overview of all activity — savings, loans, fines and welfare",        headers:["Category","# Records","Total Amount","Notes"],                                                                                              data:monthlyData,  onGenerate:loadMonthly,  filename:"peacevyn_monthly_summary.csv" },
   ];
 
   const activeReport = reports.find(r => r.key === active);
@@ -618,7 +571,9 @@ export default function Reports() {
               overflow: "hidden", transition: "box-shadow 0.2s",
             }}>
               <div style={{ background: `linear-gradient(135deg,${r.color},${r.color}bb)`, padding: "14px 18px", display: "flex", gap: 12, alignItems: "center" }}>
-                <div style={{ fontSize: 26 }}>{r.icon}</div>
+                <div style={{ width:38,height:38,borderRadius:9,background:"rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",flexShrink:0 }}>
+                  <r.Icon size={20}/>
+                </div>
                 <div>
                   <div style={{ color: "#fff", fontWeight: 800, fontSize: 15, fontFamily: "Georgia, serif" }}>{r.title}</div>
                   <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 11, marginTop: 1 }}>{r.description}</div>
@@ -630,7 +585,7 @@ export default function Reports() {
                 </span>
                 {loading && active === r.key
                   ? <div style={{ width:18,height:18,border:"2px solid #f0e8ea",borderTop:`2px solid ${r.color}`,borderRadius:"50%",animation:"spin 0.8s linear infinite" }} />
-                  : <span style={{ color: r.color, fontSize: 18, fontWeight: 700 }}>→</span>
+                  : <ChevronRight size={18} color={r.color}/>
                 }
               </div>
             </div>
@@ -642,8 +597,8 @@ export default function Reports() {
       {activeReport && activeReport.data && (
         <div style={{ background: "#fff", borderRadius: 14, padding: "20px", boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#800020", fontFamily: "Georgia, serif" }}>
-              {activeReport.icon} {activeReport.title}
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#800020", fontFamily: "Georgia, serif", display:"flex", alignItems:"center", gap:10 }}>
+              <activeReport.Icon size={18}/>{activeReport.title}
             </h2>
             <span style={{ fontSize: 12, color: "#888" }}>
               {activeReport.key !== "welfare" && activeReport.key !== "members"
@@ -675,7 +630,7 @@ export default function Reports() {
       {/* Empty state */}
       {!active && (
         <div style={{ textAlign: "center", padding: "40px 20px", background: "#fff", borderRadius: 14, boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>📊</div>
+          <Inbox size={48} style={{marginBottom:12,opacity:0.3,color:"#800020"}}/>
           <p style={{ fontSize: 16, color: "#555", fontWeight: 600, margin: "0 0 6px" }}>Select a report above to get started</p>
           <p style={{ fontSize: 13, color: "#aaa", margin: 0 }}>Choose a date range then click any report card</p>
         </div>

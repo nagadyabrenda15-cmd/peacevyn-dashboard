@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useNavigate } from "react-router-dom";
+import { CheckCircle2, KeyRound, AlertTriangle, ArrowLeft } from "lucide-react";
 
 const inp = {
   padding:"11px 14px", border:"1.5px solid #e5e7eb", borderRadius:9,
@@ -66,7 +67,7 @@ export default function PasswordResetRequest() {
       <div style={S.page}>
         <div style={S.card}>
           <div style={{textAlign:"center",padding:"20px 0"}}>
-            <div style={{fontSize:56,marginBottom:16}}>✅</div>
+            <CheckCircle2 size={56} color="#15803d" style={{marginBottom:16}}/>
             <h2 style={{margin:"0 0 8px",fontSize:20,fontWeight:800,color:"#111",fontFamily:"Georgia, serif"}}>Request Sent!</h2>
             <p style={{fontSize:14,color:"#666",lineHeight:1.6,margin:"0 0 24px"}}>
               Your password reset request has been sent to the PeaceVyn admin team.
@@ -75,7 +76,8 @@ export default function PasswordResetRequest() {
             <button onClick={()=>navigate("/login")} style={{
               background:"#800020",color:"#fff",border:"none",borderRadius:10,
               padding:"12px 28px",fontWeight:700,cursor:"pointer",fontSize:14,
-            }}>← Back to Login</button>
+              display:"flex",alignItems:"center",gap:8,margin:"0 auto",
+            }}><ArrowLeft size={15}/> Back to Login</button>
           </div>
         </div>
       </div>
@@ -86,7 +88,7 @@ export default function PasswordResetRequest() {
     <div style={S.page}>
       <div style={S.card}>
         <div style={{textAlign:"center",marginBottom:20}}>
-          <div style={{fontSize:40,marginBottom:8}}>🔑</div>
+          <KeyRound size={40} color="#800020" style={{marginBottom:8}}/>
           <h2 style={{margin:"0 0 4px",fontSize:20,fontWeight:800,color:"#111",fontFamily:"Georgia, serif"}}>Reset Your Password</h2>
           <p style={{fontSize:13,color:"#888",margin:0}}>
             Fill in the details you registered with PeaceVyn. Our team will verify and send you a new password.
@@ -127,8 +129,8 @@ export default function PasswordResetRequest() {
           </div>
 
           {error && (
-            <div style={{background:"#fff5f5",border:"1px solid #fca5a5",borderRadius:8,padding:"10px 14px",fontSize:13,color:"#dc2626"}}>
-              ⚠ {error}
+            <div style={{background:"#fff5f5",border:"1px solid #fca5a5",borderRadius:8,padding:"10px 14px",fontSize:13,color:"#dc2626",display:"flex",alignItems:"center",gap:8}}>
+              <AlertTriangle size={14}/> {error}
             </div>
           )}
 
@@ -144,8 +146,9 @@ export default function PasswordResetRequest() {
           <button onClick={()=>navigate("/login")} style={{
             background:"none", border:"none", color:"#888",
             fontSize:13, cursor:"pointer", textAlign:"center", padding:"4px",
+            display:"flex", alignItems:"center", gap:6, margin:"0 auto",
           }}>
-            ← Back to Login
+            <ArrowLeft size={13}/> Back to Login
           </button>
         </div>
       </div>

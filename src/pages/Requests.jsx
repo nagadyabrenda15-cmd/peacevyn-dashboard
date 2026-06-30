@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import {
+  CheckCircle2, XCircle, AlertTriangle, ClipboardList, Wallet,
+  Landmark, KeyRound, Inbox, RefreshCw, Mail,
+} from "lucide-react";
 
 const fmt = (n) => new Intl.NumberFormat("en-UG").format(Math.round(Number(n) || 0));
 const today = () => new Date().toISOString().split("T")[0];
@@ -81,9 +85,9 @@ function ApproveLoanModal({ request, memberName, onApprove, onReject, onCancel, 
       </div>
 
       <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
-        <button onClick={()=>onReject(adminNotes)} disabled={saving} style={{padding:"10px 18px",borderRadius:8,border:"none",background:"#dc2626",color:"#fff",fontWeight:700,cursor:"pointer",fontSize:14}}>✗ Reject</button>
-        <button onClick={()=>onApprove({interestRate:Number(interestRate),total,issueDate,dueDate,paymentMethod,adminNotes})} disabled={saving||!dueDate} style={{padding:"10px 20px",borderRadius:8,border:"none",background:saving||!dueDate?"#c0606f":"#15803d",color:"#fff",fontWeight:700,cursor:saving||!dueDate?"not-allowed":"pointer",fontSize:14}}>
-          {saving?"Processing…":"✓ Approve & Create Loan"}
+        <button onClick={()=>onReject(adminNotes)} disabled={saving} style={{padding:"10px 18px",borderRadius:8,border:"none",background:"#dc2626",color:"#fff",fontWeight:700,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",gap:6}}><XCircle size={14}/> Reject</button>
+        <button onClick={()=>onApprove({interestRate:Number(interestRate),total,issueDate,dueDate,paymentMethod,adminNotes})} disabled={saving||!dueDate} style={{padding:"10px 20px",borderRadius:8,border:"none",background:saving||!dueDate?"#c0606f":"#15803d",color:"#fff",fontWeight:700,cursor:saving||!dueDate?"not-allowed":"pointer",fontSize:14,display:"flex",alignItems:"center",gap:6}}>
+          {saving?"Processing…":<><CheckCircle2 size={14}/> Approve & Create Loan</>}
         </button>
       </div>
     </div>
@@ -269,8 +273,8 @@ export default function Requests() {
   return (
     <div style={{background:"#f8f7f5",minHeight:"100vh",padding:"20px 16px",fontFamily:"sans-serif"}}>
       {toast && (
-        <div style={{position:"fixed",top:20,right:20,zIndex:9999,background:toast.type==="error"?"#dc2626":"#15803d",color:"#fff",padding:"12px 20px",borderRadius:10,fontWeight:600,fontSize:14,boxShadow:"0 8px 24px rgba(0,0,0,0.2)",animation:"slideIn 0.3s ease"}}>
-          {toast.type==="error"?"⚠ ":"✓ "}{toast.msg}
+        <div style={{position:"fixed",top:20,right:20,zIndex:9999,background:toast.type==="error"?"#dc2626":"#15803d",color:"#fff",padding:"12px 20px",borderRadius:10,fontWeight:600,fontSize:14,boxShadow:"0 8px 24px rgba(0,0,0,0.2)",animation:"slideIn 0.3s ease",display:"flex",alignItems:"center",gap:8}}>
+          {toast.type==="error"?<XCircle size={16}/>:<CheckCircle2 size={16}/>}{toast.msg}
         </div>
       )}
       <style>{`@keyframes slideIn{from{transform:translateX(40px);opacity:0;}to{transform:translateX(0);opacity:1;}}@keyframes spin{to{transform:rotate(360deg);}}tr:hover td{background:#fff9f9!important;}input:focus,select:focus,textarea:focus{border-color:#800020!important;box-shadow:0 0 0 3px rgba(128,0,32,0.08);outline:none;}`}</style>
@@ -282,10 +286,10 @@ export default function Requests() {
           <p style={{margin:"4px 0 0",fontSize:13,color:"#888"}}>
             {totalPending > 0
               ? <span style={{color:"#dc2626",fontWeight:700}}>{totalPending} pending request{totalPending!==1?"s":""} need your attention</span>
-              : "All requests are up to date ✓"}
+              : <span style={{color:"#15803d",fontWeight:700,display:"flex",alignItems:"center",gap:4}}><CheckCircle2 size={14}/>All requests are up to date</span>}
           </p>
         </div>
-        <button onClick={loadAll} style={{background:"#800020",color:"#fff",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontSize:13,fontWeight:600}}>↻ Refresh</button>
+        <button onClick={loadAll} style={{background:"#800020",color:"#fff",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontSize:13,fontWeight:600,display:"flex",alignItems:"center",gap:6}}><RefreshCw size={14}/> Refresh</button>
       </div>
 
       {/* Tab bar */}
@@ -319,7 +323,7 @@ export default function Requests() {
             ) : loanReqs.map(r=>(
               <RequestCard
                 key={r.id}
-                icon="📋" color="#2563eb"
+                Icon={ClipboardList} color="#2563eb"
                 title={`Loan Request — UGX ${fmt(r.amount_requested)}`}
                 member={getMemberName(r.member_id)} memberNo={getMemberNumber(r.member_id)}
                 details={[`Period: ${r.repayment_period}`,`Reason: ${r.reason}`]}
@@ -338,14 +342,14 @@ export default function Requests() {
             ) : depositReqs.map(r=>(
               <RequestCard
                 key={r.id}
-                icon="💰" color="#15803d"
+                Icon={Wallet} color="#15803d"
                 title={`Savings Deposit — UGX ${fmt(r.amount)}`}
                 member={getMemberName(r.member_id)} memberNo={getMemberNumber(r.member_id)}
                 details={[`Method: ${r.payment_method}`,r.reference?`Ref: ${r.reference}`:"",r.notes?`Note: ${r.notes}`:""].filter(Boolean)}
                 status={r.status} date={r.created_at}
                 onApprove={r.status==="pending" ? ()=>handleConfirmDeposit(r) : null}
                 onReject={r.status==="pending"  ? ()=>handleRejectDeposit(r) : null}
-                approveLabel="✓ Confirm Deposit"
+                approveLabel="Confirm Deposit"
                 saving={saving}
               />
             ))
@@ -358,7 +362,7 @@ export default function Requests() {
             ) : treatReqs.map(r=>(
               <RequestCard
                 key={r.id}
-                icon="🏦" color="#800020"
+                Icon={Landmark} color="#800020"
                 title={`Treat Withdrawal — UGX ${fmt(r.amount)}`}
                 member={getMemberName(r.member_id)} memberNo={getMemberNumber(r.member_id)}
                 details={[`Account: ${r.account_number}`,r.reason?`Reason: ${r.reason}`:""].filter(Boolean)}
@@ -377,14 +381,14 @@ export default function Requests() {
             ) : pwdResetReqs.map(r=>(
               <RequestCard
                 key={r.id}
-                icon="🔑" color="#ca8a04"
+                Icon={KeyRound} color="#ca8a04"
                 title={`Password Reset — ${r.full_name}`}
                 member={r.member_number} memberNo={r.email}
                 details={[`Contact: ${r.contact}`, `Email: ${r.email}`]}
                 status={r.status} date={r.created_at}
                 onApprove={r.status==="pending" ? ()=>handleResolvePwdReset(r) : null}
                 onReject={r.status==="pending"  ? ()=>handleRejectPwdReset(r) : null}
-                approveLabel="✓ Mark Resolved"
+                approveLabel="Mark Resolved"
                 saving={saving}
               />
             ))
@@ -445,19 +449,21 @@ export default function Requests() {
 function Empty({ label }) {
   return (
     <div style={{textAlign:"center",padding:"48px 20px",background:"#fff",borderRadius:12,boxShadow:"0 2px 8px rgba(0,0,0,0.05)"}}>
-      <div style={{fontSize:40,marginBottom:10}}>📭</div>
+      <Inbox size={40} style={{marginBottom:10,opacity:0.3,color:"#800020"}}/>
       <p style={{color:"#888",margin:0,fontSize:14}}>{label}</p>
     </div>
   );
 }
 
-function RequestCard({ icon, color, title, member, memberNo, details, status, date, adminNotes, onApprove, onReject, approveLabel="✓ Approve", saving }) {
+function RequestCard({ Icon, color, title, member, memberNo, details, status, date, adminNotes, onApprove, onReject, approveLabel="Approve", saving }) {
   return (
     <div style={{background:"#fff",borderRadius:12,boxShadow:"0 2px 10px rgba(0,0,0,0.06)",overflow:"hidden",borderLeft:`4px solid ${color}`}}>
       <div style={{padding:"14px 16px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8,flexWrap:"wrap",gap:6}}>
           <div style={{display:"flex",gap:10,alignItems:"center"}}>
-            <div style={{width:38,height:38,borderRadius:10,background:`${color}18`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{icon}</div>
+            <div style={{width:38,height:38,borderRadius:10,background:`${color}18`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:color}}>
+              <Icon size={18}/>
+            </div>
             <div>
               <div style={{fontWeight:800,color:"#111",fontSize:14}}>{title}</div>
               <div style={{fontSize:12,color:"#888",marginTop:1}}>{member} · {memberNo}</div>
@@ -472,8 +478,8 @@ function RequestCard({ icon, color, title, member, memberNo, details, status, da
         {adminNotes && <div style={{fontSize:12,color:"#800020",background:"#fff5f7",borderRadius:6,padding:"6px 10px",marginBottom:8}}>Admin: {adminNotes}</div>}
         {(onApprove||onReject) && status==="pending" && (
           <div style={{display:"flex",gap:8,marginTop:10}}>
-            {onReject && <button onClick={onReject} disabled={saving} style={{flex:1,padding:"9px",borderRadius:8,border:"none",background:"#fee2e2",color:"#dc2626",fontWeight:700,cursor:"pointer",fontSize:13}}>✗ Reject</button>}
-            {onApprove && <button onClick={onApprove} disabled={saving} style={{flex:2,padding:"9px",borderRadius:8,border:"none",background:color,color:"#fff",fontWeight:700,cursor:"pointer",fontSize:13}}>{saving?"Processing…":approveLabel}</button>}
+            {onReject && <button onClick={onReject} disabled={saving} style={{flex:1,padding:"9px",borderRadius:8,border:"none",background:"#fee2e2",color:"#dc2626",fontWeight:700,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}><XCircle size={13}/> Reject</button>}
+            {onApprove && <button onClick={onApprove} disabled={saving} style={{flex:2,padding:"9px",borderRadius:8,border:"none",background:color,color:"#fff",fontWeight:700,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>{saving?"Processing…":<><CheckCircle2 size={13}/>{approveLabel}</>}</button>}
           </div>
         )}
       </div>

@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
+import {
+  HandHeart, CalendarDays, CheckCircle2, XCircle, BarChart3, List,
+  Search, X, Users, Pencil, Trash2, ChevronLeft, ChevronRight,
+  AlertTriangle,
+} from "lucide-react";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmt = (n) => new Intl.NumberFormat("en-UG").format(Math.round(Number(n) || 0));
@@ -26,21 +31,22 @@ function PaidBadge({ paid }) {
       color: paid ? "#15803d" : "#dc2626",
       fontSize: 11, fontWeight: 700,
       padding: "3px 10px", borderRadius: 99, whiteSpace: "nowrap",
+      display:"inline-flex", alignItems:"center", gap:4,
     }}>
-      {paid ? "✓ Cleared" : "✗ Not Cleared"}
+      {paid ? <CheckCircle2 size={11}/> : <XCircle size={11}/>}{paid ? "Cleared" : "Not Cleared"}
     </span>
   );
 }
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
-function KPICard({ icon, label, value, sub, accent }) {
+function KPICard({ Icon, label, value, sub, accent }) {
   return (
     <div style={{
       background: "#fff", borderRadius: 12, padding: "16px 18px",
       boxShadow: "0 2px 10px rgba(0,0,0,0.06)", borderLeft: `4px solid ${accent}`,
       display: "flex", gap: 14, alignItems: "center",
     }}>
-      <div style={{ width:44,height:44,borderRadius:10,background:`${accent}18`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0 }}>{icon}</div>
+      <div style={{ width:44,height:44,borderRadius:10,background:`${accent}18`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:accent }}><Icon size={22}/></div>
       <div>
         <div style={{ fontSize:11,color:"#888",fontWeight:600,textTransform:"uppercase",letterSpacing:0.5 }}>{label}</div>
         <div style={{ fontSize:20,fontWeight:800,color:"#111",fontFamily:"Georgia, serif" }}>{value}</div>
@@ -288,8 +294,8 @@ export default function Welfare() {
 
       {/* Toast */}
       {toast && (
-        <div style={{position:"fixed",top:20,right:20,zIndex:9999,background:toast.type==="error"?"#dc2626":"#15803d",color:"#fff",padding:"12px 20px",borderRadius:10,fontWeight:600,fontSize:14,boxShadow:"0 8px 24px rgba(0,0,0,0.2)",animation:"slideIn 0.3s ease"}}>
-          {toast.type==="error"?"⚠ ":"✓ "}{toast.msg}
+        <div style={{position:"fixed",top:20,right:20,zIndex:9999,background:toast.type==="error"?"#dc2626":"#15803d",color:"#fff",padding:"12px 20px",borderRadius:10,fontWeight:600,fontSize:14,boxShadow:"0 8px 24px rgba(0,0,0,0.2)",animation:"slideIn 0.3s ease",display:"flex",alignItems:"center",gap:8}}>
+          {toast.type==="error"?<XCircle size={16}/>:<CheckCircle2 size={16}/>}{toast.msg}
         </div>
       )}
 
@@ -311,12 +317,13 @@ export default function Welfare() {
         <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
           {/* View toggle */}
           <div style={{display:"flex",border:"1.5px solid #e5e7eb",borderRadius:8,overflow:"hidden"}}>
-            {[["monthly","📅 Monthly"],["all","☰ All Records"]].map(([mode,label])=>(
+            {[["monthly",CalendarDays,"Monthly"],["all",List,"All Records"]].map(([mode,Icon,label])=>(
               <button key={mode} onClick={()=>setViewMode(mode)} style={{
                 padding:"8px 14px",border:"none",cursor:"pointer",fontSize:13,fontWeight:600,
                 background:viewMode===mode?"#800020":"#fff",
                 color:viewMode===mode?"#fff":"#666",
-              }}>{label}</button>
+                display:"flex",alignItems:"center",gap:6,
+              }}><Icon size={14}/>{label}</button>
             ))}
           </div>
           {isAdmin && (
@@ -329,11 +336,11 @@ export default function Welfare() {
 
       {/* ── KPI Cards */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:20}}>
-        <KPICard icon="🤝" label="Total Fund"        value={`UGX ${fmt(totalFund)}`}       sub="all-time contributions"        accent="#800020"/>
-        <KPICard icon="📅" label="This Month Paid"   value={`UGX ${fmt(monthTotal)}`}      sub={`${paidCount} of ${members.length} members`} accent="#15803d"/>
-        <KPICard icon="✅" label="Cleared"            value={paidCount}                     sub={`paid for ${MONTHS[selMonth]}`} accent="#15803d"/>
-        <KPICard icon="❌" label="Not Cleared"        value={notPaidCount}                  sub={`pending for ${MONTHS[selMonth]}`} accent="#dc2626"/>
-        <KPICard icon="📊" label="Collection Rate"   value={`${collectionRate}%`}           sub={`${MONTHS[selMonth]} ${selYear}`} accent={collectionRate>=70?"#15803d":"#ca8a04"}/>
+        <KPICard Icon={HandHeart}    label="Total Fund"        value={`UGX ${fmt(totalFund)}`}       sub="all-time contributions"        accent="#800020"/>
+        <KPICard Icon={CalendarDays} label="This Month Paid"   value={`UGX ${fmt(monthTotal)}`}      sub={`${paidCount} of ${members.length} members`} accent="#15803d"/>
+        <KPICard Icon={CheckCircle2} label="Cleared"            value={paidCount}                     sub={`paid for ${MONTHS[selMonth]}`} accent="#15803d"/>
+        <KPICard Icon={XCircle}      label="Not Cleared"        value={notPaidCount}                  sub={`pending for ${MONTHS[selMonth]}`} accent="#dc2626"/>
+        <KPICard Icon={BarChart3}    label="Collection Rate"   value={`${collectionRate}%`}           sub={`${MONTHS[selMonth]} ${selYear}`} accent={collectionRate>=70?"#15803d":"#ca8a04"}/>
       </div>
 
       {/* ── Collection progress bar */}
@@ -352,12 +359,12 @@ export default function Welfare() {
         <div>
           {/* Month navigator */}
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"#fff",borderRadius:12,padding:"12px 16px",marginBottom:14,boxShadow:"0 2px 8px rgba(0,0,0,0.05)"}}>
-            <button onClick={prevMonth} style={{background:"#f3f4f6",border:"none",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontWeight:700,fontSize:14,color:"#555"}}>← Prev</button>
+            <button onClick={prevMonth} style={{background:"#f3f4f6",border:"none",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontWeight:700,fontSize:14,color:"#555",display:"flex",alignItems:"center",gap:4}}><ChevronLeft size={15}/>Prev</button>
             <div style={{textAlign:"center"}}>
               <div style={{fontSize:16,fontWeight:800,color:"#800020"}}>{MONTHS[selMonth]} {selYear}</div>
               <div style={{fontSize:12,color:"#888"}}>{paidCount} paid · {notPaidCount} pending</div>
             </div>
-            <button onClick={nextMonth} disabled={isCurrentMonth} style={{background:isCurrentMonth?"#f9f9f9":"#f3f4f6",border:"none",borderRadius:8,padding:"8px 14px",cursor:isCurrentMonth?"not-allowed":"pointer",fontWeight:700,fontSize:14,color:isCurrentMonth?"#ccc":"#555"}}>Next →</button>
+            <button onClick={nextMonth} disabled={isCurrentMonth} style={{background:isCurrentMonth?"#f9f9f9":"#f3f4f6",border:"none",borderRadius:8,padding:"8px 14px",cursor:isCurrentMonth?"not-allowed":"pointer",fontWeight:700,fontSize:14,color:isCurrentMonth?"#ccc":"#555",display:"flex",alignItems:"center",gap:4}}>Next<ChevronRight size={15}/></button>
           </div>
 
           {/* Member list for this month */}
@@ -372,7 +379,7 @@ export default function Welfare() {
               {notPaidCount > 0 && (
                 <div style={{marginBottom:16}}>
                   <div style={{fontSize:12,fontWeight:700,color:"#dc2626",textTransform:"uppercase",letterSpacing:0.5,marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
-                    <span>✗ Not Cleared ({notPaidCount})</span>
+                    <XCircle size={14}/><span>Not Cleared ({notPaidCount})</span>
                   </div>
                   <div style={{display:"flex",flexDirection:"column",gap:6}}>
                     {members.filter(m=>!paidMemberIds.has(m.id)).map(m=>(
@@ -403,8 +410,8 @@ export default function Welfare() {
               {/* Cleared section */}
               {paidCount > 0 && (
                 <div>
-                  <div style={{fontSize:12,fontWeight:700,color:"#15803d",textTransform:"uppercase",letterSpacing:0.5,marginBottom:8}}>
-                    ✓ Cleared ({paidCount})
+                  <div style={{fontSize:12,fontWeight:700,color:"#15803d",textTransform:"uppercase",letterSpacing:0.5,marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
+                    <CheckCircle2 size={14}/>Cleared ({paidCount})
                   </div>
                   <div style={{display:"flex",flexDirection:"column",gap:6}}>
                     {monthContribs.map((c,i)=>{
@@ -427,8 +434,8 @@ export default function Welfare() {
                             </div>
                             {isAdmin && (
                               <div style={{display:"flex",gap:4}}>
-                                <button onClick={()=>setEditRecord(c)} style={{background:"#fff5f7",border:"1px solid #f9c0c0",borderRadius:6,padding:"5px 8px",cursor:"pointer",fontSize:12}}>✏️</button>
-                                <button onClick={()=>setConfirmDelete(c)} style={{background:"#fff5f5",border:"1px solid #fca5a5",borderRadius:6,padding:"5px 8px",cursor:"pointer",fontSize:12}}>🗑</button>
+                                <button onClick={()=>setEditRecord(c)} style={{background:"#fff5f7",border:"1px solid #f9c0c0",borderRadius:6,padding:"5px 8px",cursor:"pointer",display:"flex",alignItems:"center",color:"#800020"}}><Pencil size={12}/></button>
+                                <button onClick={()=>setConfirmDelete(c)} style={{background:"#fff5f5",border:"1px solid #fca5a5",borderRadius:6,padding:"5px 8px",cursor:"pointer",display:"flex",alignItems:"center",color:"#dc2626"}}><Trash2 size={12}/></button>
                               </div>
                             )}
                           </div>
@@ -441,7 +448,7 @@ export default function Welfare() {
 
               {members.length === 0 && (
                 <div style={{textAlign:"center",padding:"40px 0",color:"#aaa"}}>
-                  <div style={{fontSize:36,marginBottom:8}}>👥</div>
+                  <Users size={32} style={{marginBottom:8,opacity:0.4}}/>
                   <p style={{margin:0}}>No members found.</p>
                 </div>
               )}
@@ -456,12 +463,12 @@ export default function Welfare() {
           {/* Search */}
           <div style={{background:"#fff",borderRadius:12,padding:"12px 16px",boxShadow:"0 2px 8px rgba(0,0,0,0.05)",marginBottom:14,display:"flex",gap:10,alignItems:"center"}}>
             <div style={{position:"relative",flex:1}}>
-              <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"#aaa"}}>🔍</span>
+              <Search size={15} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"#aaa"}}/>
               <input placeholder="Search member, month…" value={search}
                 onChange={e=>{setSearch(e.target.value);setPage(1);}}
                 style={{...inp,paddingLeft:32}}/>
             </div>
-            {search && <button onClick={()=>{setSearch("");setPage(1);}} style={{background:"#fee2e2",color:"#dc2626",border:"none",borderRadius:6,padding:"8px 12px",cursor:"pointer",fontSize:12,fontWeight:700}}>✕</button>}
+            {search && <button onClick={()=>{setSearch("");setPage(1);}} style={{background:"#fee2e2",color:"#dc2626",border:"none",borderRadius:6,padding:"8px 12px",cursor:"pointer",fontSize:12,fontWeight:700,display:"flex",alignItems:"center"}}><X size={13}/></button>}
             <span style={{fontSize:13,color:"#888",whiteSpace:"nowrap"}}>{filtered.length} records</span>
           </div>
 
@@ -474,7 +481,7 @@ export default function Welfare() {
               </div>
             ) : paginated.length===0 ? (
               <div style={{padding:"52px 20px",textAlign:"center"}}>
-                <div style={{fontSize:42,marginBottom:10}}>🤝</div>
+                <HandHeart size={42} style={{marginBottom:10,opacity:0.3,color:"#800020"}}/>
                 <p style={{color:"#888",margin:0,fontSize:15}}>No contributions found.</p>
               </div>
             ) : (
@@ -510,8 +517,8 @@ export default function Welfare() {
                         <td style={{padding:"11px 14px"}}>
                           {isAdmin && (
                             <div style={{display:"flex",gap:6}}>
-                              <button onClick={()=>setEditRecord(c)} style={{background:"#fff5f7",border:"1px solid #f9c0c0",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:13}}>✏️</button>
-                              <button onClick={()=>setConfirmDelete(c)} style={{background:"#fff5f5",border:"1px solid #fca5a5",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:13}}>🗑</button>
+                              <button onClick={()=>setEditRecord(c)} style={{background:"#fff5f7",border:"1px solid #f9c0c0",borderRadius:6,padding:"5px 9px",cursor:"pointer",display:"flex",alignItems:"center",color:"#800020"}}><Pencil size={13}/></button>
+                              <button onClick={()=>setConfirmDelete(c)} style={{background:"#fff5f5",border:"1px solid #fca5a5",borderRadius:6,padding:"5px 9px",cursor:"pointer",display:"flex",alignItems:"center",color:"#dc2626"}}><Trash2 size={13}/></button>
                             </div>
                           )}
                         </td>
@@ -539,7 +546,7 @@ export default function Welfare() {
                 <span style={{fontSize:13,color:"#888"}}>Showing {(page-1)*PER_PAGE+1}–{Math.min(page*PER_PAGE,filtered.length)} of {filtered.length}</span>
                 <div style={{display:"flex",gap:6}}>
                   <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
-                    style={{padding:"6px 14px",borderRadius:6,border:"1px solid #e5e7eb",background:"#fff",cursor:page===1?"not-allowed":"pointer",color:page===1?"#ccc":"#111",fontWeight:600,fontSize:13}}>← Prev</button>
+                    style={{padding:"6px 14px",borderRadius:6,border:"1px solid #e5e7eb",background:"#fff",cursor:page===1?"not-allowed":"pointer",color:page===1?"#ccc":"#111",fontWeight:600,fontSize:13,display:"flex",alignItems:"center",gap:4}}><ChevronLeft size={14}/>Prev</button>
                   {Array.from({length:totalPages},(_,i)=>i+1)
                     .filter(p=>p===1||p===totalPages||Math.abs(p-page)<=1)
                     .reduce((acc,p,i,arr)=>{if(i>0&&p-arr[i-1]>1)acc.push("...");acc.push(p);return acc;},[])
@@ -548,7 +555,7 @@ export default function Welfare() {
                       :<button key={p} onClick={()=>setPage(p)} style={{padding:"6px 12px",borderRadius:6,border:"1px solid",borderColor:page===p?"#800020":"#e5e7eb",background:page===p?"#800020":"#fff",color:page===p?"#fff":"#111",fontWeight:700,cursor:"pointer",fontSize:13}}>{p}</button>
                     )}
                   <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
-                    style={{padding:"6px 14px",borderRadius:6,border:"1px solid #e5e7eb",background:"#fff",cursor:page===totalPages?"not-allowed":"pointer",color:page===totalPages?"#ccc":"#111",fontWeight:600,fontSize:13}}>Next →</button>
+                    style={{padding:"6px 14px",borderRadius:6,border:"1px solid #e5e7eb",background:"#fff",cursor:page===totalPages?"not-allowed":"pointer",color:page===totalPages?"#ccc":"#111",fontWeight:600,fontSize:13,display:"flex",alignItems:"center",gap:4}}>Next<ChevronRight size={14}/></button>
                 </div>
               </div>
             )}
@@ -585,7 +592,7 @@ export default function Welfare() {
       {confirmDelete && (
         <Modal title="Delete Contribution" onClose={()=>setConfirmDelete(null)}>
           <div style={{textAlign:"center",padding:"8px 0 16px"}}>
-            <div style={{fontSize:44,marginBottom:12}}>⚠️</div>
+            <AlertTriangle size={40} color="#dc2626" style={{marginBottom:12}}/>
             <p style={{fontSize:16,color:"#111",fontWeight:600,margin:"0 0 6px"}}>Delete this contribution?</p>
             <p style={{fontSize:14,color:"#800020",fontWeight:700,margin:"0 0 4px"}}>
               UGX {fmt(confirmDelete.amount)} — {getMemberName(confirmDelete.member_id)}

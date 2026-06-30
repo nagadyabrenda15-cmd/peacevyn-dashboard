@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
-
+import {
+  UserCog, KeyRound, Mail, Eye, EyeOff, RefreshCw,
+  CheckCircle2, XCircle, AlertTriangle, Search, ShieldAlert,
+} from "lucide-react";
 const ROLES = ["admin","finance","treat_staff","staff","member"];
 const ROLE_COLORS = {
   admin:       "#800020",
@@ -194,7 +197,7 @@ export default function UserManagement() {
 
       {toast && (
         <div style={{position:"fixed",top:20,right:20,zIndex:9999,background:toast.type==="error"?"#dc2626":"#15803d",color:"#fff",padding:"12px 20px",borderRadius:10,fontWeight:600,fontSize:14,boxShadow:"0 8px 24px rgba(0,0,0,0.2)",maxWidth:320,lineHeight:1.5}}>
-          {toast.type==="error"?"⚠ ":"✓ "}{toast.msg}
+          {toast.type==="error"?<XCircle size={16}/>:<CheckCircle2 size={16}/>}{toast.msg}
         </div>
       )}
 
@@ -229,7 +232,7 @@ export default function UserManagement() {
       {/* Unlinked members warning */}
       {unlinkedMembers.length > 0 && (
         <div style={{background:"#fef9c3",border:"1px solid #fde68a",borderRadius:10,padding:"12px 16px",marginBottom:16,fontSize:13}}>
-          <strong style={{color:"#a16207"}}>⚠ {unlinkedMembers.length} member{unlinkedMembers.length!==1?"s":""} have no login yet:</strong>
+          <strong style={{color:"#a16207",display:"flex",alignItems:"center",gap:6}}><AlertTriangle size={14}/> {unlinkedMembers.length} member{unlinkedMembers.length!==1?"s":""} have no login yet:</strong>
           <span style={{color:"#555",marginLeft:6}}>{unlinkedMembers.map(m=>m.full_name).join(", ")}</span>
           <span style={{color:"#888",marginLeft:8}}>— use "+ Create User" to set them up.</span>
         </div>
@@ -238,11 +241,11 @@ export default function UserManagement() {
       {/* Search */}
       <div style={{background:"#fff",borderRadius:12,padding:"12px 16px",boxShadow:"0 2px 8px rgba(0,0,0,0.05)",marginBottom:14,display:"flex",gap:10,alignItems:"center"}}>
         <div style={{position:"relative",flex:1}}>
-          <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"#aaa"}}>🔍</span>
+          <Search size={15} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"#aaa"}}/>
           <input placeholder="Search by name, number, email or role…" value={search}
             onChange={e=>setSearch(e.target.value)} style={{...inp,paddingLeft:32}}/>
         </div>
-        {search && <button onClick={()=>setSearch("")} style={{background:"#fee2e2",color:"#dc2626",border:"none",borderRadius:6,padding:"8px 12px",cursor:"pointer",fontSize:12,fontWeight:700}}>✕</button>}
+        {search && <button onClick={()=>setSearch("")} style={{background:"#fee2e2",color:"#dc2626",border:"none",borderRadius:6,padding:"8px 12px",cursor:"pointer",fontSize:12,fontWeight:700}}>Clear</button>}
       </div>
 
       {/* Table */}
@@ -254,7 +257,7 @@ export default function UserManagement() {
           </div>
         ) : filtered.length===0 ? (
           <div style={{padding:"48px 20px",textAlign:"center"}}>
-            <div style={{fontSize:40,marginBottom:10}}>👤</div>
+            <UserCog size={40} style={{marginBottom:10,opacity:0.3,color:"#800020"}}/>
             <p style={{color:"#888",margin:0}}>No users found.</p>
           </div>
         ) : (
@@ -282,28 +285,28 @@ export default function UserManagement() {
                     </td>
                     <td style={{padding:"11px 14px"}}><Badge role={u.role}/></td>
                     <td style={{padding:"11px 14px",fontSize:12,color:u.member?"#555":"#dc2626"}}>
-                      {u.member ? `${u.member.full_name} (${u.member.member_number})` : "⚠ Not linked"}
+                      {u.member ? `${u.member.full_name} (${u.member.member_number})` : <span style={{color:"#dc2626",display:"flex",alignItems:"center",gap:4}}><ShieldAlert size={13}/>Not linked</span>}
                     </td>
                     <td style={{padding:"11px 14px"}}>
                       <div style={{display:"flex",gap:6,flexWrap:"nowrap"}}>
                         {/* Change role */}
                         <button onClick={()=>setEditUser(u)}
                           title="Change role"
-                          style={{background:"#fff5f7",border:"1px solid #f9c0c0",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12,fontWeight:600,color:"#800020",whiteSpace:"nowrap"}}>
-                          🎭 Role
+                          style={{background:"#fff5f7",border:"1px solid #f9c0c0",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12,fontWeight:600,color:"#800020",whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:5}}>
+                          <UserCog size={13}/> Role
                         </button>
                         {/* Reset password */}
                         <button onClick={()=>setResetUser(u)}
                           title="Set password"
-                          style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12,fontWeight:600,color:"#2563eb",whiteSpace:"nowrap"}}>
-                          🔑 Password
+                          style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12,fontWeight:600,color:"#2563eb",whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:5}}>
+                          <KeyRound size={13}/> Password
                         </button>
                         {/* Send reset email */}
                         {u.member?.email && (
                           <button onClick={()=>handleSendResetEmail(u.member.email)}
                             title="Send password reset email"
-                            style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12,fontWeight:600,color:"#15803d",whiteSpace:"nowrap"}}>
-                            📧 Reset Email
+                            style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12,fontWeight:600,color:"#15803d",whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:5}}>
+                            <Mail size={13}/> Reset Email
                           </button>
                         )}
                       </div>
@@ -337,8 +340,8 @@ export default function UserManagement() {
                 <input type={showPwd?"text":"password"} placeholder="Min 6 characters" value={createForm.password}
                   onChange={e=>setCreateForm(f=>({...f,password:e.target.value}))}
                   style={{...inp,paddingRight:44,...(createErrors.password?{borderColor:"#dc2626"}:{})}}/>
-                <button onClick={()=>setShowPwd(s=>!s)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:15,color:"#888",padding:0}}>
-                  {showPwd?"🙈":"👁"}
+                <button onClick={()=>setShowPwd(s=>!s)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:"#888",padding:0,display:"flex"}}>
+                  {showPwd?<EyeOff size={16}/>:<Eye size={16}/>}
                 </button>
               </div>
               {createErrors.password && <span style={{fontSize:11,color:"#dc2626"}}>{createErrors.password}</span>}
@@ -394,7 +397,7 @@ export default function UserManagement() {
 
             <div style={{background:"#fff5f7",borderRadius:8,padding:"10px 12px",fontSize:12,color:"#800020"}}>
               <strong>Role permissions:</strong><br/>
-              admin → Full access · finance → Savings & Loans · treat_staff → Treat & Welfare · staff → View only · member → Own portal only
+              admin: Full access · finance: Savings & Loans · treat_staff: Treat & Welfare · staff: View only · member: Own portal only
             </div>
 
             <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
@@ -424,23 +427,23 @@ export default function UserManagement() {
                 <input type={showPwd?"text":"password"} placeholder="Min 6 characters"
                   value={newPassword} onChange={e=>setNewPassword(e.target.value)}
                   style={{...inp,paddingRight:44}}/>
-                <button onClick={()=>setShowPwd(s=>!s)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:15,color:"#888",padding:0}}>
-                  {showPwd?"🙈":"👁"}
+                <button onClick={()=>setShowPwd(s=>!s)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:"#888",padding:0,display:"flex"}}>
+                  {showPwd?<EyeOff size={16}/>:<Eye size={16}/>}
                 </button>
               </div>
               <span style={{fontSize:11,color:"#888"}}>Share this new password with the member via WhatsApp/SMS</span>
             </div>
 
-            <div style={{background:"#eff6ff",borderRadius:8,padding:"10px 12px",fontSize:12,color:"#1d4ed8"}}>
-              📧 Alternatively — <strong>Send Reset Email</strong> to let the member set their own password via email link.
+            <div style={{background:"#eff6ff",borderRadius:8,padding:"10px 12px",fontSize:12,color:"#1d4ed8",display:"flex",alignItems:"center",gap:8}}>
+              <Mail size={14}/> Alternatively — <strong>Send Reset Email</strong> to let the member set their own password via email link.
             </div>
 
             <div style={{display:"flex",gap:10,justifyContent:"flex-end",flexWrap:"wrap"}}>
               <button onClick={()=>{setResetUser(null);setNewPassword("");}} style={{padding:"10px 16px",borderRadius:8,border:"1.5px solid #e5e7eb",background:"#fff",color:"#555",fontWeight:600,cursor:"pointer",fontSize:14}}>Cancel</button>
               {resetUser.member?.email && (
                 <button onClick={()=>{handleSendResetEmail(resetUser.member.email);setResetUser(null);setNewPassword("");}}
-                  style={{padding:"10px 16px",borderRadius:8,border:"none",background:"#15803d",color:"#fff",fontWeight:700,cursor:"pointer",fontSize:14}}>
-                  📧 Send Reset Email
+                  style={{padding:"10px 16px",borderRadius:8,border:"none",background:"#15803d",color:"#fff",fontWeight:700,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",gap:6}}>
+                  <Mail size={14}/> Send Reset Email
                 </button>
               )}
               <button onClick={handleResetPassword} disabled={saving}

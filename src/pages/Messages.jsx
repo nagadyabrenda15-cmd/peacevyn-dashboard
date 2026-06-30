@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabase";
+import { MessageCircle, Search, Send } from "lucide-react";
 
 export default function Messages() {
   const [members,       setMembers]       = useState([]);
@@ -33,21 +34,6 @@ export default function Messages() {
     setAllMessages(prev => prev.map(m =>
       m.member_id === memberId && !m.is_admin_reply ? { ...m, read_by_admin: true } : m
     ));
-  }
-
-  async function markThreadRead(memberId) {
-  await supabase
-    .from("member_comments")
-    .update({ read_by_admin: true })
-    .eq("member_id", memberId)
-    .eq("is_admin_reply", false)
-    .eq("read_by_admin", false);
-
-  setAllMessages(prev => prev.map(m =>
-    m.member_id === memberId && !m.is_admin_reply ? { ...m, read_by_admin: true } : m
-  ));
-
-  window.dispatchEvent(new Event("peacevyn:refresh-badges"));
   }
 
   async function loadAll() {
@@ -153,7 +139,7 @@ export default function Messages() {
         <div style={{flex:1,background:"#fff",borderRadius:14,boxShadow:"0 2px 12px rgba(0,0,0,0.06)",display:"flex",flexDirection:"column",overflow:"hidden"}}>
           {!selectedId ? (
             <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",color:"#aaa"}}>
-              <div style={{fontSize:48,marginBottom:12}}>💬</div>
+              <MessageCircle size={48} style={{marginBottom:12,opacity:0.3,color:"#800020"}}/>
               <p style={{margin:0,fontSize:14}}>Select a conversation to view messages</p>
             </div>
           ) : (
